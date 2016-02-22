@@ -1,0 +1,33 @@
+{
+  "name": "whiteroomnew",
+  "version": "0.0.1",
+  "description": "Forum and chat about people's personal and health related problems and tribulations",
+  "main": "/app/index.js",
+  "scripts": {
+    "test": "jasmine-node spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LazyDal/whiteroomnew"
+  },
+  "keywords": [
+    "forum",
+    "chat",
+    "problems",
+    "psychology",
+    "philosophy",
+    "health",
+    "mysticism"
+  ],
+  "author": "Dalibor Dragojevic",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LazyDal/whiteroomnew/issues"
+  },
+  "devDependencies": {
+    "zombie": "~4.2.1"
+  },
+  "dependencies": {
+    "mongoose": "~4.4.4"
+  }
+}
