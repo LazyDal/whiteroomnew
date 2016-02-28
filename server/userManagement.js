@@ -1,49 +1,105 @@
 "use strict";
 
+var Promise = require('es6-promise').Promise;
 var mongoose = require('mongoose');
+var validate = require('validate.js');
+var XRegExp = require('xregexp');
 
-var UserImageSchema = require('../server/UserImageSchema');
-var UserImage = mongoose.model('UserImage', UserImageSchema);
+var UserImage = require('../model/UserSchema').UserImage;
+var User = require('../model/UserSchema').User;
 
-var UserSchema = require('../server/UserSchema').UserSchema;
-var User = require('../server/UserSchema').User;
+// Custom validator for username
+validate.validators.userNameCheck = function(value, options, key, attributes) {
+	var dissallowedCharacters = XRegExp('\\p{Z}|\\p{S}|\\p{C}');
+	if (dissallowedCharacters.test(value)) return "contains invalid characters.";
+	else return null;
+}
+var constraints = {
+  userName: {
+  	presence: true,
+  	userNameCheck: true
+  },
+  email: {
+  	presence: true,
+  	email: true
+  },
+  password: {
+    presence: true,
+    length: {
+      minimum: 6,
+      message: "must be at least 6 characters"
+    }
+  },
+  age: {
+  	numericality: {
+      onlyInteger: true,
+		  greaterThan: 5,
+  		lessThanOrEqualTo: 250	// Not a mistake ;)
+  	}
+  }
+};
 
 var userManagement = {
-	saveUser: function (newUser) {
-		// body...
+	newUserValidation: function (newUser) {
+		return validate(newUser, constraints);
 	},
+	newUser: function (newUser) {
+		this.trimFieldSpaces(newUser);
+		this.checkImage(newUser.image);
+		var validationMessages = this.newUserValidation(newUser);
+		if (validationMessages) {
+			console.log('\n' + JSON.stringify(validationMessages) + '\n');
+			return validationMessages;
+		}
+			
+    /* newUser.password = */ this.hashPassword(newUser.password);
+		return this.saveUser(newUser);
+	},
+	saveUser: function (newUser) {
+		var newUserBeingSaved = new Promise(function(resolve, reject){
+			newUser.save( function( err ){
+				if (err) {
+					console.log(err);
+					validationMessages["internal"] = "User not saved due to internal server error :(";
+					validationMessages["status"] = "Error";
+					throw err;
+					reject(validationMessages);
+				}
+				console.log('User saved!');
+				resolve(validationMessages);
+			});
+		});
+		// Return the deferred promise
+		return newUserBeingSaved;
+	},
+	// before this function. PasswordOK() should be called
 	hashPassword: function(password) {
 		var hashedPassword; // = hash algorhythm
-		return hashedPassword;
+		return password;
 	},
-	newUser: function () {
-		var userImage = new UserImage({
-			data: 'buffer',
-			contentType: 'img/jpeg'
-		});
-		
-		var newUser = new User({
-			userName: 'Name',
-			realName: 'Real Name',
-			email: 'some@mail',
-			password: 'somepassword',
-			country: 'some country',
-			phone: '+xxx yy zzz-zzz',
-			age: 25,
-			sex: 'Male/Female',
-			status: 'Single/InRelation/Married/Divorced',
-			interestedIn: 'Men/Women/Both',
-			image: userImage,
-			createdOn: Date.now(),
-			lastAction: Date.now(),
-			totalPosts: 42,
-			totalTopicsStarted: 12
-		});
-		newUser.password = this.hashPassword(newUser.password);
-		this.saveUser(newUser);
+	trimFieldSpaces: function(user) {
+		// trim spaces left and right in string fields
+		if (user.userName) user.userName = user.userName.trim();
+		if (user.realName) user.realName = user.realName.trim();
+		if (user.email) user.email = user.email.trim();
+		if (user.password) user.password = user.password.trim();
+		if (user.country) user.country = user.country.trim();
+		if (user.phone) user.phone = user.phone.trim();
+	},
+	checkImage: function(image) {
+		// no less than 100x100 px
+	},
+	tryAddingUserToList: function(user, userList) {
+		this.checkUserExistence(user.userName);
+		this.addUserToList(user, userList);
+		validationMessages["status"] = "O.K.";
+		return validationMessages;
 	},
 	addUserToList: function(user, userList) {
 		// TODO
+	},
+	checkUserExistence: function(newUserName) {
+		// body...
 	}
 };
 
