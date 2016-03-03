@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Whiteroom Add Profile</title>
+</head>
+<body>
+	<h1>Add Profile</h1>
+	
+	<form action="http://localhost:3000/api/addprofile" method="POST" enctype="multipart/form-data">
+    <label for="userName">User Name</label>
+    <input type="text" name="userName" placeholder="User Name"><br />
+    <input type="text" name="realName" placeholder="Real Name"><br />
+    <input type="email" name="email" placeholder="E-Mail"><br />
+    <input type="password" name="password"><br />
+    <input type="text" name="country" placeholder="Country"><br />
+    <input type="tel" name="phone" placeholder="Phone"><br />
+    <input type="number" name="age" placeholder="Age"><br />
+    <select name="sex">
+    	<option value="Male">Male</option>
+    	<option value="Female">Female</option>
+    	<option value="None">None</option>
+    	<option value="Other">Other</option>
+    	<option value="Not Specified">Not Specified</option>
+    </select><br />
+    <select name="status">
+	    <option value="Single">Single</option>
+	    <option value="In Relation">In Relation</option>
+  	  <option value="Married">Married</option>
+    	<option value="Divorced">Divorced</option>
+    	<option value="Other">Other</option>
+    	<option value="None">None</option>
+    	<option value="Not Specified">Not Specified</option>
+    </select><br />
+    <select name="interestedIn">
+    	<option value="Women">Women</option>
+    	<option value="Men">Men</option>
+    	<option value="None">Both</option>
+    	<option value="Other">None</option>
+    	<option value="Other">Other</option>
+    	<option value="Not Specified">Not Specified</option>
+    </select><br />
+    <input type="file" name="image"/>
+    <button type="submit">Submit</button>
+	</form>
+</body>
+</html>
