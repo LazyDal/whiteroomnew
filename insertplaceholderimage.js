@@ -10,9 +10,10 @@ var userManagement = require('./server/userManagement');
 /* User Image */
 var UserImage = require('./model/UserSchema').UserImage;
 var userImage = new UserImage({
-	data: fs.readFileSync('./user-placeholder.jpg'),
+	data: fs.readFileSync('./static/images/user-placeholder.jpg'),
 	contentType: 'image/jpeg',
-	name: "userImagePlaceholder"
+	name: "userImagePlaceholder",
+	tmpPath: __dirname + "/static/images/user-placeholder.jpg"
 });
 userImage.save(function(err){
 	if (err) throw err;

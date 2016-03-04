@@ -5,11 +5,17 @@ var mongoose = require('mongoose');
 var validate = require('validate.js');
 validate.Promise = Promise;	// validate.js will use this Promise implementation
 var XRegExp = require('xregexp');
+var easyimage = require('easyimage'); // peer dependency on imagemagick ('sudo apt-get install imagemagick')
 
+// Import mongoose models
 var UserImage = require('../model/UserSchema').UserImage;
 var User = require('../model/UserSchema').User;
 
-// Custom validator for username
+//
+//	Validate.js will use the information that follows
+//
+
+// Custom validator for username. Checks if userName already exists in MongoDB database; since it's an asynchronous function, it returns a promise. Note that it resolves regardless of whether validation passed or not; reject is only for internal server error states which should be logged in the error log.
 validate.validators.userNameCheck = function(value, options, key, attributes) {
 	return new validate.Promise(function (resolve, reject) {
 		var dissallowedCharacters = XRegExp('\\p{Z}|\\p{S}|\\p{C}'); // Matches Unicode character categories whitespace, symbol and special characters	
@@ -20,7 +26,7 @@ validate.validators.userNameCheck = function(value, options, key, attributes) {
 			if (result === "already exists.") resolve("already exists.");
 			else resolve();
 		}).catch (function(err) {
-			reject(err);
+			reject(err);	// TODO
 		});
 	});
 }
@@ -38,12 +44,31 @@ validate.validators.emailUnique = function(value, options, key, attributes) {
 		});
 	});
 }
+// Custom validator for image size
+validate.validators.imageSizeOK = function(image, options, key, attributes) {
+	return new validate.Promise(function(resolve, reject) {
+		if (image === null) resolve();	// User image doesn't have to exist
+		easyimage.info(image.tmpPath).then(	// tmpPath holds the path to uploaded image
+		  function(img) {
+		  	console.log("Image type: " + img.type);	// TODO
+		  	if (img.type != "jpeg") resolve("must be in jpeg format");
+		  	else if (img.height < 120 || img.width < 120) resolve ("must be min. 120x120px");
+		  	else if (img.height > 1200 || img.width > 1920) resolve ("must be max. 1920x1200px")
+		    else
+		    	resolve();
+		  }, function (err) {
+		    reject(err);	// TODO
+		  }
+		);
+	});
+}
+// Validation.js constrains for the User object; self explanatory. Note that the custom validators defined previously will be called, such as userNameCheck.
 var constraints = {
   userName: {
   	presence: true,
   	userNameCheck: true,
   	length: {
-  		maximum: 30,
+  		maximum: 40,
   		message:"too long"
   	}
   },
@@ -88,17 +113,23 @@ var constraints = {
   		maximum: 30,
   		message:"too long"
   	}
+  },
+  image: {
+  	imageSizeOK: true
   }
 };
 
+//
+// Main object for user data manipulation
+//
 var userManagement = {
 	newUserValidation: function (newUser) {
-		return validate.async(newUser, constraints);
+		return validate.async(newUser, constraints);	// calls validate.js asynchronous validation mechanism
 	},
 	checkUserExistence: function(userName) {
 		return new Promise(function(resolve, reject){ 
 			User.findOne({'userName' : userName}, function(err, foundUser) {
-				if (err) reject(err);
+				if (err) reject(err);	// TODO
 				if (foundUser) {
 					resolve("already exists.");
 				}
@@ -110,25 +141,38 @@ var userManagement = {
 	},
 	newUser: function (newUser) {
 		var that = this;
+		// This function will be called after succesfull user object validation and will save the user to MongoDB
 		var validationSuccess = function(){
 			 /* newUser.password = */ that.hashPassword(newUser.password);
-			 return that.saveUser(newUser);
+			if (newUser.image) {
+				// Easyimage.js info method returns a promise containing image information
+				easyimage.info(image.tmpPath).then(	// tmpPath holds path to uploaded image
+				  function(img) {
+				   	if (img.height > 120 || img.width > 120) {
+				   		// TODO
+				   	}
+				  }, function (err) {
+				    reject(err);	// TODO
+				  }
+			  );
+			}
+			return that.saveUser(newUser);
 		}
+		// This function will be called if user object validation failed
 		var validationError = function (validationErrors) {
 			return new Promise(function(resolve, reject){
 				resolve(validationErrors);
 			});
 		}
-
+		// Eliminate whitespace on the beggining and the ending of string fields
 		this.trimFieldSpaces(newUser);
-		this.checkImage(newUser.image);
+		// Validate and then call apropriate functions
 		return this.newUserValidation(newUser).then(validationSuccess, validationError);
 	},
 	saveUser: function (newUser) {
 		return new Promise(function(resolve, reject){
 			var ImageSaved = new Promise(function(resolve2, reject2){
-				if (!newUser.image) {
-					console.log("Trying with placeholder image...\n");
+				if (!newUser.image) {	// If no image, refer to placeholder image
 					UserImage.findOne({name:"userImagePlaceholder"}, function (err, img) {
       			if (err) reject2(err);
       			newUser.image = img;
@@ -137,8 +181,7 @@ var userManagement = {
 				}
 				else {
 					newUser.image.save(function(err) {
-						if (err)
-							reject2(err);
+						if (err) reject2(err);
 						resolve2();
 					});
 				}
@@ -148,7 +191,6 @@ var userManagement = {
 					if (err) {
 						reject(err);
 					}
-					console.log('User saved!');
 					resolve();
 				});
 			}).catch(function(reason){
@@ -156,30 +198,18 @@ var userManagement = {
 			}); // User Saved
 		});	// Promise
 	},
-	logOut: function(req){
-		req.session.destroy(function(err){
-			if (err) throw err;	// TODO
-		})
-	},
-	returnLoggedInUsers: function() {
-		// TODO
-	},
 	hashPassword: function(password) {
 		var hashedPassword; // = hash algorhythm
 		return password;
 	},
 	trimFieldSpaces: function(user) {
-		// trim spaces left and right in string fields
+		// trim spaces on the beggining and ending of string fields
 		if (user.userName) user.userName = user.userName.trim();
 		if (user.realName) user.realName = user.realName.trim();
 		if (user.email) user.email = user.email.trim();
 		if (user.password) user.password = user.password.trim();
 		if (user.country) user.country = user.country.trim();
 		if (user.phone) user.phone = user.phone.trim();
-	},
-	checkImage: function(image) {
-		// no less than 120x120 px
-		// TODO
 	},
 	tryAddingUserToList: function(user, userList) {
 		this.checkUserExistence(user.userName);

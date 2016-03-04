@@ -2,39 +2,46 @@
 
 var Promise = require('es6-promise').Promise;
 var mongoose = require('../server/MongooseTestConnection'); // This will automaticaly open the MongoDB connection
+var fs=require('fs');
 
 // Unit Under Test
 var userManagement = require('../server/userManagement');
 
-/*****************************************************/
-/* Objects which will be used as arguments for tests */
-/*****************************************************/
-/* User Image */
+/*****************************************************************/
+/* Objects which will be used as arguments for the tests follow  */
+/* MongoDB, Redis and imagemagick must be installed	and running	 */
+/* MongoDB 'WhiteroomTest' database must be empty for this test  */			 
+/*****************************************************************/
+/* User Image - we will insert the default placeholder image in this test */
 var UserImage = require('../model/UserSchema').UserImage;
 var userImage = new UserImage({
-	data: 'dfgdfg',
-	contentType: 'img/jpeg'
+	data: fs.readFileSync('../static/images/user-placeholder.jpg'),
+	contentType: 'image/jpeg',
+	name: "userImagePlaceholder",
+	tmpPath: __dirname + '/../static/images/user-placeholder.jpg'
 });
-/* User Lists */
+/* Import User List model */
 var UserList = require('../model/UserSchema').UserList;
+// Create user list instance
 var userList = new UserList({
 	name:'ListName',
 	users: null
 });
-/* User */
+/* User model */
 var User = require('../model/UserSchema.js').User;
+// Create user instance
 var user = new User({
-	userName: 'AGoodName',
+	userName: 'AnExistingName',
 	realName: 'Real Name',
 	email: 'some@domain.com',
 	password: 'somepassword',
 	country: 'some country',
 	phone: '+xxx yy zzz-zzz',
 	age: 250,
-	sex: 'Male/Female',
-	status: 'Single/InRelation/Married/Divorced',
-	interestedIn: 'Men/Women/Both',
-	image: null,
+	sex: 'Female',
+	status: 'In relation',
+	interestedIn: 'Men',
+	image: userImage,
 	userLists: userList,
 	createdOn: Date.now(),
 	lastAction: Date.now(),
@@ -44,7 +51,7 @@ var user = new User({
 });
 
 
-describe("User Sign Up Process:", function () {
+describe("Succsefull User Sign Up Process:", function () {
 
 	describe("The User Image Object:", function () {
 		it("should exist", function(){
@@ -103,53 +110,45 @@ describe("User Sign Up Process:", function () {
 
 		// We will test some async functions so we need the special Jasmine done() argument
 	 	beforeEach(function(done) {
+			// These spies will also actually execute the spied on methods because of andCallThrough() methods
 			spyOn(userManagement, 'newUser').andCallThrough();
-			spyOn(userManagement, 'saveUser').andCallThrough();
-			spyOn(userManagement, 'hashPassword');
 			spyOn(userManagement, 'trimFieldSpaces').andCallThrough();
 			spyOn(userManagement, 'newUserValidation').andCallThrough();
-			spyOn(userManagement, 'checkImage');
+			spyOn(userManagement, 'hashPassword');
+			spyOn(userManagement, 'saveUser').andCallThrough();
 			// Now we envoke the function which orchestrates the new user creation process; it returns a promise, since it uses several async functions
-	    userManagement.newUser(user).then(	
- 				function (results) {
-				  validationResults = results;
-		      console.log(validationResults);
-		      // Invoke the special Jasmine done callback; no further tests will run before this function is invoked
-		      done();
- 				}
- 			).catch(function(reason){
- 				console.log(reason);
- 				done();
+	    // First save the user image
+	    userImage.save(function(err){
+				if (err) throw err;
+		    // Now try to create new user
+		    userManagement.newUser(user).then(	// This is quite a complex process where all validation must happen first
+	 				function (results) {
+					  validationResults = results;
+			      console.log(validationResults);
+			      // Invoke the special Jasmine done callback; no further tests will run before this function is invoked
+			      done();
+	 				}
+	 			).catch(function(reason){
+	 				console.log(reason);
+	 				done();
+	 			});
  			});
 	  });
-		it("should have validated the user object argument, hashed the password and called saveUser method", function(done) {
+		it("should have validated the user object argument, hashed the password and called saveUser method", function() {
 			expect(userManagement.trimFieldSpaces).toHaveBeenCalled();
 			expect(userManagement.newUserValidation).toHaveBeenCalled();
-			expect(validationResults["status"]).toEqual("O.K.");
+			expect(validationResults).toEqual(undefined);	// If validation is passed, validation results will be undefined; this is Validate.js convention
 			expect(userManagement.hashPassword).toHaveBeenCalled();
 			expect(typeof(userManagement.hashPassword.mostRecentCall.args[0])).toMatch("string");
-			expect(userManagement.checkImage).toHaveBeenCalled();
 			expect(userManagement.saveUser).toHaveBeenCalled();
 			expect(userManagement.saveUser.mostRecentCall.args[0] instanceof User).toBe(true);
-			// mongoose.connection.close(function () {
-			// 	console.log('Mongoose disconnected');
-			// 	// process.exit(0);
-			// });
+			
+			mongoose.connection.close(function () {
+				console.log('Mongoose disconnected');
+				process.exit(0);
+			});
 		}); // it
 	}); // describe
 
-	describe("Adding User To a List:", function(){
-			it("should check if the user exists and call addUserToList with two arguments", function() {
-			spyOn(userManagement, "tryAddingUserToList").andCallThrough();
-			spyOn(userManagement, "addUserToList");
-			spyOn(userManagement, "checkUserExistence");
-			var returnValue = userManagement.tryAddingUserToList(user, userList);
-			expect(userManagement.checkUserExistence).toHaveBeenCalled();
-			expect(typeof(userManagement.checkUserExistence.mostRecentCall.args[0])).toEqual('string');
-			expect(userManagement.addUserToList).toHaveBeenCalled();
-			expect(userManagement.addUserToList.mostRecentCall.args[0] instanceof User).toBe(true);
-			expect(userManagement.addUserToList.mostRecentCall.args[1] instanceof UserList).toBe(true);
-			expect(returnValue["status"]).toEqual("O.K.");
-		});
-	}); // describe
 }); // describe
+	
