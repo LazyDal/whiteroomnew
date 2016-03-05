@@ -1,6 +1,6 @@
 {
   "name": "whiteroomnew",
-  "version": "0.1.0",
+  "version": "0.0.3",
   "description": "Forum and chat about people's personal and health related problems and tribulations",
   "main": "/app/index.js",
   "scripts": {
