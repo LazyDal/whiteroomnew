@@ -145,8 +145,7 @@ describe("Succsefull User Sign Up Process:", function () {
 			
 			mongoose.connection.close(function () {
 				console.log('Mongoose disconnected');
-				process.exit(0);
-			});
+		});
 		}); // it
 	}); // describe
 

@@ -1,7 +1,6 @@
 
-/* This module creates Mongoose ORM to MongoDB connection */
-/* And defines all the needed event handlers */
-/* Meant solely for test (development on localhost) environment */
+/* This module creates Mongoose ORM to MongoDB connection and defines all the needed event handlers */
+/* Configured for test (development on localhost) environment */
 
 "use strict";
 

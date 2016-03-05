@@ -18,7 +18,8 @@ var userManagement = require('./server/userManagement');
 // Require Mongoose models that the server will need
 var UserImage = require('./model/UserSchema').UserImage;
 var User = require('./model/UserSchema').User;
-// App
+
+// Instantiate the server
 var server = express();
 
 // HTTP listening port
@@ -59,14 +60,25 @@ server.get('/', function(req,res){
 
 // Try to log in user
 server.post('/api/login',function(req,res){
-    // This function looks in the redis store to see if this user is already logged in; this will be true if there is a key 'user:[username]'
+    // This function looks in the redis store to see if this user is already logged in on another client machine; this will be true if there is a key 'user:[username]'
     var checkExistingRedisSession = new Promise(function(resolve, reject) {
     	// redis get key command
     	redisClient.get("user:" + req.body.userName, function(err, reply) {
         // reply is null when the key is missing
         if(reply) {
-        	res.end("<h1>This user is already logged in on another client machine.</h1>");
-        	reject();
+        	// User is already logged in and trying to log in again
+        	// remove the user entry from redis
+        	redisClient.del("user:"+req.session.userName);
+        	// regenerate the user session
+        	req.session.regenerate(function(){
+	        	if(err){
+	        	    res.end("<h1>Log out failed due to server error: </h1>" + reason);
+	        	    reject();
+	        	} else {
+        	    resolve();	// now the user is effectively logged out
+	        	}
+        							
+        	});
         }
         else resolve();
     });
@@ -172,46 +184,45 @@ server.get('/getAllLoggedInUsers', function(req, res){
 	        'MATCH', 'user:*',
 	        'COUNT', '10',
 	        function(err, result) {
-	            var i;
-	            if (err) throw err;	// TODO
+            if (err) throw err;	// TODO
 
-	            // Update the cursor position for the next scan
-	            cursor = result[0];
-	            // get the SCAN result for this iteration
-	            var keys = result[1];
+            // Update the cursor position for the next scan
+            cursor = result[0];
+            // get the SCAN result for this iteration
+            var keys = result[1];
 
-	            // Remember: more or less than COUNT or no keys may be returned
-	            // See http://redis.io/commands/scan#the-count-option
-	            // Also, SCAN may return the same key multiple times
-	            // See http://redis.io/commands/scan#scan-guarantees
-	            // Additionally, you should always have the code that uses the keys
-	            // before the code checking the cursor.
-	            if (keys.length > 0) {
-	                for (i=0; i < keys.length; ++i) {
-	                	loggedInUsers.push(keys[i]);	
-	                }
-	                console.log('Array of matching keys', keys);
-	            }
+            // Remember: more or less than COUNT or no keys may be returned
+            // See http://redis.io/commands/scan#the-count-option
+            // Also, SCAN may return the same key multiple times
+            // See http://redis.io/commands/scan#scan-guarantees
+            // Additionally, you should always have the code that uses the keys
+            // before the code checking the cursor.
+            if (keys.length > 0) {
+                keys.map(function(key){
+                	loggedInUsers.push(key);
+                });
+                console.log('Array of matching keys', keys);
+            }
 
-	            // It's important to note that the cursor and returned keys
-	            // vary independently. The scan is never complete until redis
-	            // returns a zero cursor. However, with MATCH and large
-	            // collections, most iterations will return an empty keys array.
+            // It's important to note that the cursor and returned keys
+            // vary independently. The scan is never complete until redis
+            // returns a zero cursor. However, with MATCH and large
+            // collections, most iterations will return an empty keys array.
 
-	            // Still, a cursor of zero DOES NOT mean that there are no keys.
-	            // A zero cursor just means that the SCAN is complete, but there
-	            // might be one last batch of results to process.
+            // Still, a cursor of zero DOES NOT mean that there are no keys.
+            // A zero cursor just means that the SCAN is complete, but there
+            // might be one last batch of results to process.
 
-	            // From <http://redis.io/commands/scan>:
-	            // 'An iteration starts when the cursor is set to 0,
-	            // and terminates when the cursor returned by the server is 0.'
-	            if (cursor === '0') {
-	                console.log('Iteration complete');
-	                res.end(JSON.stringify(loggedInUsers));
-	                return;
-	            }
+            // From <http://redis.io/commands/scan>:
+            // 'An iteration starts when the cursor is set to 0,
+            // and terminates when the cursor returned by the server is 0.'
+            if (cursor === '0') {
+                console.log('Iteration complete');
+                res.end(JSON.stringify(loggedInUsers));
+                return;
+            }
 
-	            return scan();
+            return scan();
 	        }
 	    );
 	}
