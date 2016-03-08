@@ -9,8 +9,7 @@ var userManagement = require('../server/userManagement');
 
 /*****************************************************************/
 /* Objects which will be used as arguments for the tests follow  */
-/* MongoDB and imagemagick must be installed	and running	 */
-/* MongoDB 'WhiteroomTest' database must be empty for this test  */			 
+/* MongoDB must be installed and running	 */
 /*****************************************************************/
 /* User Image - we will insert the default placeholder image in this test */
 var UserImage = require('../model/UserSchema').UserImage;
@@ -102,7 +101,19 @@ describe("Succsefull User Sign Up Process:", function () {
 		it("should exist", function(){
 			expect(userManagement).toBeDefined();
 		});
-		// TODO
+		it ("should contain all the neccesary methods" , function(){
+			expect(userManagement.checkUserExistence).toBeDefined();
+			expect(userManagement.newUserValidation).toBeDefined();
+			expect(userManagement.updateUserValidation).toBeDefined();
+			expect(userManagement.newUser).toBeDefined();
+			expect(userManagement.updateUser).toBeDefined();
+			expect(userManagement.updateUserDB).toBeDefined();
+			expect(userManagement.saveUser).toBeDefined();
+			expect(userManagement.getUserProfile).toBeDefined();
+			expect(userManagement.getUserImage).toBeDefined();
+			expect(userManagement.hashPassword).toBeDefined();
+			expect(userManagement.trimFieldSpaces).toBeDefined();
+		});
 	});
 
 	describe("New User Creation Process:", function () {

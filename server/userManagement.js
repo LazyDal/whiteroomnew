@@ -116,6 +116,7 @@ var newUserConstraints = {
   	imageSizeOK: true
   }
 };
+// Validation.js constrains which will be used when updating an existing user object
 var updateUserConstraints = {
   age: {
   	numericality: {
@@ -208,15 +209,16 @@ var userManagement = {
 	updateUserDB: function(user) {
 
 		return new Promise(function(resolve, reject){
-			console.log('Should write to DB...');
-			console.log('User name: ' + user.userName);
-			var imageSaved = new Promise(function(resolve2, reject2){			
-				user.image.save(function(err) {
-					if (err) reject(err);
-					resolve2();
-				});
+			// First save new image, of any
+			var imageSaved = new Promise(function(resolve2, reject2){		
+				if (user.image) {
+					user.image.save(function(err) {
+						if (err) reject(err);
+						resolve2();
+					});
+				}
 			}); // Image Saved
-			imageSaved.then(User.findOneAndUpdate({
+			imageSaved.then(User.findOneAndUpdate({ // we use model object itself, not an instance - it wouldn't work
 				userName: user.userName
 			}, 
 			{ $set: {realName: user.realName, country: user.country, phone: user.phone, age: user.age, sex: user.sex, status: user.status, interestedIn: user.interestedIn, image: user.image} }
@@ -239,7 +241,6 @@ var userManagement = {
       		});
 				}
 				else {
-					console.log('Resolved with uploaded image.\n')
 					newUser.image.save(function(err) {
 						if (err) reject(err);
 						resolve2();
