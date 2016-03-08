@@ -51,10 +51,10 @@ server.use(session({
 
 server.get('/', function(req,res){
 	if (req.session.userName) {	// User logged in
-		res.end('<a href="#">Edit User Profile</a><br /><a href="http://localhost:3000/getAllLoggedInUsers">Show Logged In Users Test</a><br /><form action="http://localhost:3000/api/logout" method="GET"><button type="submit">Log Out</button></form>');
+		res.end('<a href="http://localhost:3000/test/viewprofile.html">View User Profile</a><br /><a href="http://localhost:3000/test/editprofile.html">Edit User Profile</a><br /><a href="http://localhost:3000/getAllLoggedInUsers">Show Logged In Users Test</a><br /><form action="http://localhost:3000/api/logout" method="GET"><button type="submit">Log Out</button></form><a href="http://localhost:3000/test/viewprofile.html"></a>');
 	}
 	else {	// Anonymous user
-		res.end('<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Whiteroom LogIn</title></head><body><h1>Logging In To Whiteroom</h1><form action="http://localhost:3000/api/login" method="POST"><fieldset id="name-group" class="form-group"><label for="userName">User Name</label><input type="text" class="form-control" name="userName" placeholder="User Name"><button type="submit">Log In</button></fieldset></form><a href="http://localhost:3000/test/addprofile.html">Add New Profile Test</a><br /><a href="http://localhost:3000/getAllLoggedInUsers">Show Logged In Users Test</a></body></html>');
+		res.end('<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Whiteroom LogIn</title></head><body><h1>Logging In To Whiteroom</h1><form action="http://localhost:3000/api/login" method="POST"><fieldset id="name-group" class="form-group"><input type="text" name="userName" placeholder="User Name"><button type="submit">Log In</button></fieldset></form><a href="http://localhost:3000/test/addprofile.html">Add New Profile Test</a><br /><a href="http://localhost:3000/getAllLoggedInUsers">Show Logged In Users Test</a><br /><a href="http://localhost:3000/test/viewprofile.html">View User Profiles</a></body></html>');
 	}
 });
 
@@ -75,7 +75,7 @@ server.post('/api/login',function(req,res){
 	        	    res.end("<h1>Log out failed due to server error: </h1>" + reason);
 	        	    reject();
 	        	} else {
-        	    resolve();	// now the user is effectively logged out
+        	    resolve();	// now the user has another session, but no entry in redis
 	        	}
         							
         	});
@@ -116,6 +116,49 @@ server.get('/api/logout',function(req,res){
         }
     });
 });
+
+server.get('/api/getUserProfile/:name', function(req, res){
+		if (!req.params.name) {
+			res.end();
+			return;
+		}
+		userManagement.getUserProfile(req.params.name).then(function(userProfile){
+			res.end(JSON.stringify(userProfile));
+		}).catch(function(reason){
+			console.log("Error: " + reason); 	// TODO
+			res.end();
+		}); 
+});
+server.get('/api/getOwnProfile', function(req, res){
+		if (!req.session.userName) {
+			res.end();
+			return;
+		}
+		userManagement.getUserProfile(req.session.userName).then(function(userProfile){
+			res.end(JSON.stringify(userProfile));
+		}).catch(function(reason){
+			console.log("Error: " + reason); 	// TODO
+			res.end();
+		}); 
+});
+server.get('/userImage/:name', function (req, res) {
+	userManagement.getUserImage(req.params.name).then(function(img){
+		res.contentType(img.contentType);
+		res.end(img.data);
+	}).catch(function(reason){
+		console.log("Error: " + reason);
+	});
+});
+server.get('/ownUserImage', function (req, res) {
+	if (!req.session.userName) return;
+	userManagement.getUserImage(req.session.userName).then(function(img){
+		res.contentType(img.contentType);
+		res.end(img.data);
+	}).catch(function(reason){
+		console.log("Error: " + reason);
+	});
+});
+
 
 // Test Routes, TODO: delete for production
 server.post('/api/addprofile', function(req, res){
@@ -161,17 +204,46 @@ server.post('/api/addprofile', function(req, res){
 		});
 	});
 });
+server.post('/api/updateprofile', function(req, res){
+	var form = new formidable.IncomingForm();
+	var userImage = null;
+	form.parse(req, function(err, fields, files){
+		console.log('received fields:');
+		console.log(fields);
+		console.log('received files:');
+		console.log(files);
+		// prepare an img in binary for mongo
+		if (files.image.size > 0) {
+			userImage = new UserImage;
+			userImage.data = fs.readFileSync(files.image.path);
+			userImage.contentType = files.image.type;
+			userImage.tmpPath = files.image.path;
+		}
+		var user = new User({
+			userName: req.session.userName,
+			realName: fields.realName,
+			country: fields.country,
+			phone: fields.phone,
+			age: fields.age,
+			sex: fields.sex,
+			status: fields.status,
+			interestedIn: fields.interestedIn,
+			image: userImage
+	  });
+
+    userManagement.updateUser(user).then(	
+			function (results) {
+			  res.end(JSON.stringify(results));
+			}
+		).catch(function(reason){
+			res.end(JSON.stringify(reason));	// TODO
+		});
+	});
+});
+
 server.get('/placeholderimage', function(req, res) {
 	res.end('<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Whiteroom LogIn</title></head><body><img src="http://localhost:3000/placeholderimagesrc"></img></body></html>');
 });
-server.get('/placeholderimagesrc', function (req, res) {
-  UserImage.findOne({name:"userImagePlaceholder"}, function (err, img) {
-    if (err) throw (err);
-  	console.log(img.contentType);
-    res.contentType("image/jpeg");
-    res.end(img.data);
-  });
- });
 server.get('/getAllLoggedInUsers', function(req, res){
 	var cursor = '0';
 	var loggedInUsers = [];

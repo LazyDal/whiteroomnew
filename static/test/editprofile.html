@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Whiteroom Add Profile</title>
+  <script src="jquery-2.2.1.min.js"></script>
+</head>
+<body>
+	<h1>Edit Profile</h1>
+	
+	<form action="http://localhost:3000/api/updateprofile" method="POST" enctype="multipart/form-data">
+    <p id="userName">User name:</p>
+    <p id="email">E-mail:</p>
+    <label for="realName">Real Name</label>
+    <input type="text" name="realName" placeholder="Real Name"><br />
+    <label for="country">Country</label>
+    <input type="text" name="country" placeholder="Country"><br />
+    <label for="phone">Phone</label>
+    <input type="tel" name="phone" placeholder="Phone"><br />
+    <label for="age">Age</label>
+    <input type="number" name="age" placeholder="Age"><br />
+    <label for="sex">Sex</label>
+    <select name="sex">
+    	<option value="Male">Male</option>
+    	<option value="Female">Female</option>
+    	<option value="None">None</option>
+    	<option value="Other">Other</option>
+    	<option value="Not Specified">Not Specified</option>
+    </select><br />
+    <label for="status">Status</label>
+    <select name="status">
+	    <option value="Single">Single</option>
+	    <option value="In Relation">In Relation</option>
+  	  <option value="Married">Married</option>
+    	<option value="Divorced">Divorced</option>
+    	<option value="Other">Other</option>
+    	<option value="None">None</option>
+    	<option value="Not Specified">Not Specified</option>
+    </select><br />
+    <label for="interestedIn">Interested in</label>
+    <select name="interestedIn">
+    	<option value="Women">Women</option>
+    	<option value="Men">Men</option>
+    	<option value="None">Both</option>
+    	<option value="Other">None</option>
+    	<option value="Other">Other</option>
+    	<option value="Not Specified">Not Specified</option>
+    </select><br />
+    <input type="file" name="image"/>
+    <button type="submit">Submit</button>
+	</form>
+
+    <script>
+    $.ajax({
+      type        : 'GET', // define the type of HTTP verb we want to use (POST for our form)
+      url         : '/api/getOwnProfile', // the url where we want to POST
+      dataType    : 'json' // what type of data do we expect back from the server
+  })
+// using the done promise callback
+.done(function(user) {
+  $('#userName').append(user.userName);
+  $('#email').append(user.email);
+  $("input[name='realName']").val(user.realName);
+  $("input[name='country']").val(user.country);
+  $("input[name='phone']").val(user.phone);
+  $("input[name='age']").val(user.age);
+  $("input[name='sex']").val(user.sex);
+  $("input[name='status']").val(user.status);
+  $("input[name='interestedIn']").val(user.interestedIn);
+  $("input[name='country']").val(user.country);
+  $("form").after('<img alt="User image" src="http://localhost:3000/ownUserImage#' + new Date().getTime() + '" />');
+})
+.fail(function(data) {
+  window.alert("Error! " + data);
+});
+    </script>
+</body>
+</html>

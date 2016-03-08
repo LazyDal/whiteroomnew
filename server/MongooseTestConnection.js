@@ -5,6 +5,7 @@
 "use strict";
 
 var mongoose = require( 'mongoose' );
+
 var MongoDBTestCredentials = require('../config/MongoDBTestCredentials');
 
 // Create the database connection 

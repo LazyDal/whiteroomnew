@@ -9,7 +9,7 @@ var userManagement = require('../server/userManagement');
 
 /*****************************************************************/
 /* Objects which will be used as arguments for the tests follow  */
-/* MongoDB, Redis and imagemagick must be installed	and running	 */
+/* MongoDB and imagemagick must be installed	and running	 */
 /* MongoDB 'WhiteroomTest' database must be empty for this test  */			 
 /*****************************************************************/
 /* User Image - we will insert the default placeholder image in this test */
