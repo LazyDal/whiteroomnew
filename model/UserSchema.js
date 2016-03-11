@@ -14,7 +14,7 @@ var UserImage = mongoose.model('UserImage', UserImageSchema);
 
 var UserListSchema = new mongoose.Schema({
 	name: String,
-	users: [{type:mongoose.Schema.Types.ObjectId, ref: User}]
+	users: [String]
 });
 var UserList = mongoose.model('UserList', UserListSchema);
 

@@ -7,10 +7,12 @@ validate.Promise = Promise;	// validate.js will use this Promise implementation
 var XRegExp = require('xregexp');
 var sizeOfImage = require('image-size');
 var fs = require('fs');
+var Set =  require('jsclass/src/set').Set;
 
 // Import mongoose models
 var UserImage = require('../model/UserSchema').UserImage;
 var User = require('../model/UserSchema').User;
+var UserList = require('../model/UserSchema').UserList;
 
 var userImageMinX = 128,
  		userImageMinY = 128,
@@ -60,6 +62,13 @@ validate.validators.imageSizeOK = function(image, options, key, attributes) {
 	}
   return;
 }
+validate.validators.name = function(name, options, key, attributes) {
+		var dissallowedCharacters = XRegExp('\\p{S}|\\p{C}'); // Matches Unicode character categories symbol and special characters
+		if (dissallowedCharacters.test(name)) {
+			return "contains invalid characters.";
+		}
+		else return;
+}
 // Validation.js constrains for the new User object; self explanatory. Note that the custom validators defined previously will be called, such as userNameCheck.
 var newUserConstraints = {
   userName: {
@@ -81,6 +90,7 @@ var newUserConstraints = {
   },
   password: {
     presence: true,
+    name: true,
     length: {
       minimum: 6,
       maximum: 254,
@@ -95,12 +105,14 @@ var newUserConstraints = {
   	}
   },
   realName: {
+  	name: true,
   	length: {
   		maximum: 80,
   		message:"too long"
   	}
   },
   country: {
+  	name: true,
   	length: {
   		maximum: 80,
   		message:"too long"
@@ -126,12 +138,14 @@ var updateUserConstraints = {
   	}
   },
   realName: {
+  	name: true,
   	length: {
   		maximum: 80,
   		message:"too long"
   	}
   },
   country: {
+  	name: true,
   	length: {
   		maximum: 80,
   		message:"too long"
@@ -147,7 +161,15 @@ var updateUserConstraints = {
   	imageSizeOK: true
   }
 };
-
+var createUserListConstraints = {
+	name: {
+		name: true,
+		length: {
+			maximum: 30,
+			message:"too long"
+		}
+	}
+}
 //
 // Main object for user data manipulation
 //
@@ -168,6 +190,7 @@ var userManagement = {
 	newUserValidation: function (newUser) {
 		return validate.async(newUser, newUserConstraints);	// calls validate.js asynchronous validation mechanism
 	},
+	// Doesn't validate userName, email and password
 	updateUserValidation: function (user) {
 		return validate.async(user, updateUserConstraints);	// calls validate.js asynchronous validation mechanism
 	},
@@ -189,6 +212,7 @@ var userManagement = {
 		// Validate and then call apropriate functions
 		return this.newUserValidation(newUser).then(validationSuccess, validationError);
 	},
+	// Doesn't update userName, email and password
 	updateUser: function(user) {
 		var that = this;
 
@@ -206,17 +230,40 @@ var userManagement = {
 
 		return this.updateUserValidation(user).then(validationSuccess, validationError);
 	},
+	// writes update User data to database
 	updateUserDB: function(user) {
 
 		return new Promise(function(resolve, reject){
 			// First save new image, of any
 			var imageSaved = new Promise(function(resolve2, reject2){		
+				// if user image already exist 
 				if (user.image) {
-					user.image.save(function(err) {
-						if (err) reject(err);
-						resolve2();
-					});
-				}
+					User
+						.findOne({'userName' : user.userName})
+						.populate('image', 'name')	// we look at image's name
+						.exec(function(err, foundUser)
+						 {
+						if (err) {
+							reject(err);	// TODO
+						}
+						// only placeholder image has a name; don't delete it, else delete the old image
+						if (!foundUser.image.name) UserImage.remove({_id: foundUser.image}, function(err) {
+							if (err) reject(err);
+							// save new user image
+							user.image.save(function(err) {
+								if (err) reject(err);
+								resolve2();
+							});
+						});
+						else {
+							// save new user image
+							user.image.save(function(err) {
+								if (err) reject(err);
+								resolve2();
+							});
+						}
+					});	// findOne
+				}	// if
 			}); // Image Saved
 			imageSaved.then(User.findOneAndUpdate({ // we use model object itself, not an instance - it wouldn't work
 				userName: user.userName
@@ -305,6 +352,45 @@ var userManagement = {
 		if (user.password) user.password = user.password.trim();
 		if (user.country) user.country = user.country.trim();
 		if (user.phone) user.phone = user.phone.trim();
+	},
+	createUserList: function(userName, listName) {
+		var that = this;
+		return new Promise(function(resolve, reject){
+			that.checkUserExistence(userName).then(function(result){
+				if (result === 'already exists.') {
+					var validationResults = validate(listName, createUserListConstraints);
+					if (validationResults !== {}) resolve(validationResults);
+					var newUserList = new UserList({
+						name: listName,
+						users: []
+					});
+					var newUserListSaved = new Promise(function(resolve2, reject2){
+						newUserList.save(function(err){
+							if (err) reject(err);
+							resolve2();
+						});
+					});
+					newUserListSaved.then(function(){
+						User.findOne({ 'userName': userName }, function(err, foundUser){
+							if (err) throw err; // TODO
+							var thisUserLists = foundUser.userLists;
+							thisUserLists.push(newUserList);
+							console.log('User List: ' + thisUserLists);
+							User.findOneAndUpdate( // we use model object itself, not an instance - it wouldn't work
+								{ userName: userName }, 
+								{ $set: { userLists: thisUserLists } },
+								function(err){
+									if (err) throw err;	// TODO
+									resolve();
+									console.log('User List Created.');
+								}
+							);
+						});
+					});
+				}
+				else resolve2("this user doesn't exist");
+			});
+		});
 	},
 	tryAddingUserToList: function(user, userList) {
 		this.checkUserExistence(user.userName);
