@@ -5,7 +5,7 @@ var mongoose = require('../server/MongooseTestConnection'); // This will automat
 var fs=require('fs');
 
 // Unit Under Test
-var userManagement = require('../server/userManagement');
+var userProfile = require('../server/userProfile');
 
 /*****************************************************************/
 /* Objects which will be used as arguments for the tests follow  */
@@ -99,20 +99,20 @@ describe("Succsefull User Sign Up Process:", function () {
 
 	describe("The User management object:", function(){
 		it("should exist", function(){
-			expect(userManagement).toBeDefined();
+			expect(userProfile).toBeDefined();
 		});
 		it ("should contain all the neccesary methods" , function(){
-			expect(userManagement.checkUserExistence).toBeDefined();
-			expect(userManagement.newUserValidation).toBeDefined();
-			expect(userManagement.updateUserValidation).toBeDefined();
-			expect(userManagement.newUser).toBeDefined();
-			expect(userManagement.updateUser).toBeDefined();
-			expect(userManagement.updateUserDB).toBeDefined();
-			expect(userManagement.saveUser).toBeDefined();
-			expect(userManagement.getUserProfile).toBeDefined();
-			expect(userManagement.getUserImage).toBeDefined();
-			expect(userManagement.hashPassword).toBeDefined();
-			expect(userManagement.trimFieldSpaces).toBeDefined();
+			expect(userProfile.checkUserExistence).toBeDefined();
+			expect(userProfile.newUserValidation).toBeDefined();
+			expect(userProfile.updateUserValidation).toBeDefined();
+			expect(userProfile.newUser).toBeDefined();
+			expect(userProfile.updateUser).toBeDefined();
+			expect(userProfile.updateUserDB).toBeDefined();
+			expect(userProfile.saveUser).toBeDefined();
+			expect(userProfile.getUserProfile).toBeDefined();
+			expect(userProfile.getUserImage).toBeDefined();
+			expect(userProfile.hashPassword).toBeDefined();
+			expect(userProfile.trimFieldSpaces).toBeDefined();
 		});
 	});
 
@@ -122,17 +122,17 @@ describe("Succsefull User Sign Up Process:", function () {
 		// We will test some async functions so we need the special Jasmine done() argument
 	 	beforeEach(function(done) {
 			// These spies will also actually execute the spied on methods because of andCallThrough() methods
-			spyOn(userManagement, 'newUser').andCallThrough();
-			spyOn(userManagement, 'trimFieldSpaces').andCallThrough();
-			spyOn(userManagement, 'newUserValidation').andCallThrough();
-			spyOn(userManagement, 'hashPassword');
-			spyOn(userManagement, 'saveUser').andCallThrough();
+			spyOn(userProfile, 'newUser').andCallThrough();
+			spyOn(userProfile, 'trimFieldSpaces').andCallThrough();
+			spyOn(userProfile, 'newUserValidation').andCallThrough();
+			spyOn(userProfile, 'hashPassword');
+			spyOn(userProfile, 'saveUser').andCallThrough();
 			// Now we envoke the function which orchestrates the new user creation process; it returns a promise, since it uses several async functions
 	    // First save the user image
 	    userImage.save(function(err){
 				if (err) throw err;
 		    // Now try to create new user
-		    userManagement.newUser(user).then(	// This is quite a complex process where all validation must happen first
+		    userProfile.newUser(user).then(	// This is quite a complex process where all validation must happen first
 	 				function (results) {
 					  validationResults = results;
 			      console.log(validationResults);
@@ -146,13 +146,13 @@ describe("Succsefull User Sign Up Process:", function () {
  			});
 	  });
 		it("should have validated the user object argument, hashed the password and called saveUser method", function() {
-			expect(userManagement.trimFieldSpaces).toHaveBeenCalled();
-			expect(userManagement.newUserValidation).toHaveBeenCalled();
+			expect(userProfile.trimFieldSpaces).toHaveBeenCalled();
+			expect(userProfile.newUserValidation).toHaveBeenCalled();
 			expect(validationResults).toEqual(undefined);	// If validation is passed, validation results will be undefined; this is Validate.js convention
-			expect(userManagement.hashPassword).toHaveBeenCalled();
-			expect(typeof(userManagement.hashPassword.mostRecentCall.args[0])).toMatch("string");
-			expect(userManagement.saveUser).toHaveBeenCalled();
-			expect(userManagement.saveUser.mostRecentCall.args[0] instanceof User).toBe(true);
+			expect(userProfile.hashPassword).toHaveBeenCalled();
+			expect(typeof(userProfile.hashPassword.mostRecentCall.args[0])).toMatch("string");
+			expect(userProfile.saveUser).toHaveBeenCalled();
+			expect(userProfile.saveUser.mostRecentCall.args[0] instanceof User).toBe(true);
 			
 			mongoose.connection.close(function () {
 				console.log('Mongoose disconnected');

@@ -4,7 +4,7 @@ var Promise = require('es6-promise').Promise;
 var mongoose = require('../server/MongooseTestConnection'); // This will automaticaly open the MongoDB connection
 
 // Unit Under Test
-var userManagement = require('../server/userManagement');
+var userProfile = require('../server/userProfile');
 
 /* MongoDB and imagemagick must be installed	and running	 */
 var User = require('../model/UserSchema.js').User;
@@ -12,7 +12,7 @@ var User = require('../model/UserSchema.js').User;
 describe("Get user data:", function() {
 
 	it("should return User object containing all the fields", function(){
-		userManagement.getUserProfile('AnExistingName').then(function(result){
+		userProfile.getUserProfile('AnExistingName').then(function(result){
 			expect(result).toBeDefined();
 			expect(result.realName).toBeDefined();
 			expect(result.email).toBeDefined();
@@ -29,14 +29,14 @@ describe("Update user data:", function() {
 		 	var validationResults = {};
 		 	beforeEach(function(done) {
 				// These spies will also actually execute the spied on methods because of andCallThrough() methods
-				spyOn(userManagement, 'updateUser').andCallThrough();
-				spyOn(userManagement, 'trimFieldSpaces').andCallThrough();
-				spyOn(userManagement, 'updateUserValidation').andCallThrough();
-				spyOn(userManagement, 'updateUserDB').andCallThrough();
+				spyOn(userProfile, 'updateUser').andCallThrough();
+				spyOn(userProfile, 'trimFieldSpaces').andCallThrough();
+				spyOn(userProfile, 'updateUserValidation').andCallThrough();
+				spyOn(userProfile, 'updateUserDB').andCallThrough();
 				var editedUser = new User({userName: "AnExistingName", realName: "Another Name", country: "another country", age: 28
 				});
 				// Now we envoke the function which orchestrates updating user data process; it returns a promise, since it uses several async functions
-		    userManagement.updateUser(editedUser).then(	// This is quite a complex process where all validation must happen first
+		    userProfile.updateUser(editedUser).then(	// This is quite a complex process where all validation must happen first
 		 				function (results) {
 						  validationResults = results;
 				      console.log(validationResults);
@@ -50,11 +50,11 @@ describe("Update user data:", function() {
 	 			});
 
 				it("should have validated the user object argument and updated user calling updateUserDB method", function(done) {
-						expect(userManagement.trimFieldSpaces).toHaveBeenCalled();
-						expect(userManagement.updateUserValidation).toHaveBeenCalled();
-						expect(userManagement.updateUserDB).toHaveBeenCalled();
+						expect(userProfile.trimFieldSpaces).toHaveBeenCalled();
+						expect(userProfile.updateUserValidation).toHaveBeenCalled();
+						expect(userProfile.updateUserDB).toHaveBeenCalled();
 						expect(validationResults).toEqual(undefined);
-						userManagement.getUserProfile('AnExistingName').then(function(savedUser){ 
+						userProfile.getUserProfile('AnExistingName').then(function(savedUser){ 
 							expect(savedUser.realName).toMatch('Another Name');
 							expect(savedUser.country).toMatch('another country');
 							expect(savedUser.age).toEqual(28);

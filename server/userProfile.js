@@ -7,12 +7,13 @@ validate.Promise = Promise;	// validate.js will use this Promise implementation
 var XRegExp = require('xregexp');
 var sizeOfImage = require('image-size');
 var fs = require('fs');
-var Set =  require('jsclass/src/set').Set;
 
 // Import mongoose models
 var UserImage = require('../model/UserSchema').UserImage;
 var User = require('../model/UserSchema').User;
 var UserList = require('../model/UserSchema').UserList;
+
+var userCommon = require('./userCommon');
 
 var userImageMinX = 128,
  		userImageMinY = 128,
@@ -30,7 +31,7 @@ validate.validators.userNameCheck = function(value, options, key, attributes) {
 		if (dissallowedCharacters.test(value)) {
 			resolve("contains invalid characters.");
 		}
-		userManagement.checkUserExistence(value).then(function(result){
+		userCommon.checkUserExistence(value).then(function(result){
 			if (result === "already exists.") resolve("already exists.");
 			else resolve();
 		}).catch (function(err) {
@@ -62,13 +63,7 @@ validate.validators.imageSizeOK = function(image, options, key, attributes) {
 	}
   return;
 }
-validate.validators.name = function(name, options, key, attributes) {
-		var dissallowedCharacters = XRegExp('\\p{S}|\\p{C}'); // Matches Unicode character categories symbol and special characters
-		if (dissallowedCharacters.test(name)) {
-			return "contains invalid characters.";
-		}
-		else return;
-}
+
 // Validation.js constrains for the new User object; self explanatory. Note that the custom validators defined previously will be called, such as userNameCheck.
 var newUserConstraints = {
   userName: {
@@ -161,32 +156,10 @@ var updateUserConstraints = {
   	imageSizeOK: true
   }
 };
-var createUserListConstraints = {
-	name: {
-		name: true,
-		length: {
-			maximum: 30,
-			message:"too long"
-		}
-	}
-}
 //
 // Main object for user data manipulation
 //
-var userManagement = {
-	checkUserExistence: function(userName) {
-		return new Promise(function(resolve, reject){ 
-			User.findOne({'userName' : userName}, function(err, foundUser) {
-				if (err) reject(err);	// TODO
-				if (foundUser) {
-					resolve("already exists.");
-				}
-				else {
-					resolve();
-				}
-			});
-		});
-	},
+var userProfile = {
 	newUserValidation: function (newUser) {
 		return validate.async(newUser, newUserConstraints);	// calls validate.js asynchronous validation mechanism
 	},
@@ -352,54 +325,7 @@ var userManagement = {
 		if (user.password) user.password = user.password.trim();
 		if (user.country) user.country = user.country.trim();
 		if (user.phone) user.phone = user.phone.trim();
-	},
-	createUserList: function(userName, listName) {
-		var that = this;
-		return new Promise(function(resolve, reject){
-			that.checkUserExistence(userName).then(function(result){
-				if (result === 'already exists.') {
-					var validationResults = validate(listName, createUserListConstraints);
-					if (validationResults !== {}) resolve(validationResults);
-					var newUserList = new UserList({
-						name: listName,
-						users: []
-					});
-					var newUserListSaved = new Promise(function(resolve2, reject2){
-						newUserList.save(function(err){
-							if (err) reject(err);
-							resolve2();
-						});
-					});
-					newUserListSaved.then(function(){
-						User.findOne({ 'userName': userName }, function(err, foundUser){
-							if (err) throw err; // TODO
-							var thisUserLists = foundUser.userLists;
-							thisUserLists.push(newUserList);
-							console.log('User List: ' + thisUserLists);
-							User.findOneAndUpdate( // we use model object itself, not an instance - it wouldn't work
-								{ userName: userName }, 
-								{ $set: { userLists: thisUserLists } },
-								function(err){
-									if (err) throw err;	// TODO
-									resolve();
-									console.log('User List Created.');
-								}
-							);
-						});
-					});
-				}
-				else resolve2("this user doesn't exist");
-			});
-		});
-	},
-	tryAddingUserToList: function(user, userList) {
-		this.checkUserExistence(user.userName);
-		this.addUserToList(user, userList);
-		return null;
-	},
-	addUserToList: function(user, userList) {
-		// TODO
 	}
 };
 
-module.exports = userManagement;
+module.exports = userProfile;

@@ -3,7 +3,7 @@
 var Promise = require('es6-promise').Promise;
 var mongoose = require('../server/MongooseTestConnection'); // This will automaticaly open the MongoDB connection
 
-var userManagement = require('../server/userManagement');
+var userProfile = require('../server/userProfile');
 
 var MongoDBTestCredentials = require('../config/MongoDBTestCredentials');
 
@@ -21,8 +21,8 @@ describe("Invalid user field values handling during the sign-up process", functi
 	var validationResults;
 
 	beforeEach(function(done) {
-		spyOn(userManagement, 'saveUser');
-    userManagement.newUser(user).then(	
+		spyOn(userProfile, 'saveUser');
+    userProfile.newUser(user).then(	
 				function (results) {
 				  validationResults = results;
 		      console.log('\n' + JSON.stringify(validationResults) + '\n');
@@ -35,7 +35,7 @@ describe("Invalid user field values handling during the sign-up process", functi
 			});
 	});	
 	it("should reject invalid user name and age and complain about the missing password; should return an object about these errors", function(){
-		expect(userManagement.saveUser).not.toHaveBeenCalled();
+		expect(userProfile.saveUser).not.toHaveBeenCalled();
 		expect(validationResults).not.toEqual({});
 		// prepare the user object for next assertion
 		user.userName = " NameName ";
@@ -43,7 +43,7 @@ describe("Invalid user field values handling during the sign-up process", functi
 		user.email= "!what?@#4.!@#";
 	});
 	it("should reject invalid age and email and return an object about errors", function() {
-		expect(userManagement.saveUser).not.toHaveBeenCalled();
+		expect(userProfile.saveUser).not.toHaveBeenCalled();
 		expect(validationResults).not.toEqual({});
 		// prepare the user object for next assertion
 		user.userName = "AnExistingName";
@@ -52,7 +52,7 @@ describe("Invalid user field values handling during the sign-up process", functi
 		user.password = "four";
 	});
 	it("should reject the existing user name 'AnExistingName', the existing email, and short password and return an object about errors", function(done) {
-		expect(userManagement.saveUser).not.toHaveBeenCalled();
+		expect(userProfile.saveUser).not.toHaveBeenCalled();
 		expect(validationResults).not.toEqual({});
 		// mongoose.connection.close(function () {
 					done();
