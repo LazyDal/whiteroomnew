@@ -1,6 +1,6 @@
 {
   "name": "whiteroomnew",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Forum and chat about people's personal and health related problems and tribulations",
   "main": "/app/index.js",
   "scripts": {
@@ -28,7 +28,17 @@
     "zombie": "~4.2.1"
   },
   "dependencies": {
+    "body-parser": "^1.15.0",
+    "connect-redis": "^3.0.2",
+    "es6-promise": "^3.1.2",
+    "express": "~4.13.4",
+    "express-session": "^1.13.0",
+    "formidable": "^1.0.17",
+    "image-size": "^0.4.0",
+    "jsclass": "^4.0.5",
     "mongoose": "~4.4.4",
-    "express": "~4.13.4"
+    "redis": "^2.4.2",
+    "validate.js": "^0.9.0",
+    "xregexp": "^3.1.0"
   }
 }

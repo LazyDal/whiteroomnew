@@ -14,7 +14,7 @@ require('./server/MongooseTestConnection');
 var credentials = require('./config/credentials');
 
 // Key object containing user management related methods
-var userManagement = require('./server/userManagement');
+var userProfile = require('./server/userProfile');
 // Require Mongoose models that the server will need
 var UserImage = require('./model/UserSchema').UserImage;
 var User = require('./model/UserSchema').User;
@@ -85,7 +85,7 @@ server.post('/api/login',function(req,res){
   });
   // After making sure the user is not already logged in, continue to check that the user exists in the MongoDB database
   checkExistingRedisSession.then(function(){
-  	userManagement.checkUserExistence(req.body.userName).then(
+  	userProfile.checkUserExistence(req.body.userName).then(
   		function (result) {
   			if (result === "already exists.") {
   				// User exists, O.K.
@@ -122,7 +122,7 @@ server.get('/api/getUserProfile/:name', function(req, res){
 			res.end();
 			return;
 		}
-		userManagement.getUserProfile(req.params.name).then(function(userProfile){
+		userProfile.getUserProfile(req.params.name).then(function(userProfile){
 			res.end(JSON.stringify(userProfile));
 		}).catch(function(reason){
 			console.log("Error: " + reason); 	// TODO
@@ -134,7 +134,7 @@ server.get('/api/getOwnProfile', function(req, res){
 			res.end();
 			return;
 		}
-		userManagement.getUserProfile(req.session.userName).then(function(userProfile){
+		userProfile.getUserProfile(req.session.userName).then(function(userProfile){
 			res.end(JSON.stringify(userProfile));
 		}).catch(function(reason){
 			console.log("Error: " + reason); 	// TODO
@@ -142,7 +142,7 @@ server.get('/api/getOwnProfile', function(req, res){
 		}); 
 });
 server.get('/userImage/:name', function (req, res) {
-	userManagement.getUserImage(req.params.name).then(function(img){
+	userProfile.getUserImage(req.params.name).then(function(img){
 		res.contentType(img.contentType);
 		res.end(img.data);
 	}).catch(function(reason){
@@ -151,7 +151,7 @@ server.get('/userImage/:name', function (req, res) {
 });
 server.get('/ownUserImage', function (req, res) {
 	if (!req.session.userName) return;
-	userManagement.getUserImage(req.session.userName).then(function(img){
+	userProfile.getUserImage(req.session.userName).then(function(img){
 		res.contentType(img.contentType);
 		res.end(img.data);
 	}).catch(function(reason){
@@ -195,7 +195,7 @@ server.post('/api/addprofile', function(req, res){
 			points: 0
 	  });
 
-    userManagement.newUser(newUser).then(	
+    userProfile.newUser(newUser).then(	
 			function (results) {
 			  res.end(JSON.stringify(results));
 			}
@@ -231,7 +231,7 @@ server.post('/api/updateprofile', function(req, res){
 			image: userImage
 	  });
 
-    userManagement.updateUser(user).then(	
+    userProfile.updateUser(user).then(	
 			function (results) {
 			  res.end(JSON.stringify(results));
 			}

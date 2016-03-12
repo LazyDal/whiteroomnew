@@ -53,10 +53,9 @@ var userLists = {
 							}).catch(function(reason){
 								console.log("An error occured: " + reason); // TODO
 							});
-							console.log('User List: ' + thisUserLists);
 						});
 				}
-				else resolve2("this user doesn't exist");
+				else resolve("this user doesn't exist");
 			});
 		});
 	},

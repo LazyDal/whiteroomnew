@@ -28,13 +28,13 @@ describe ("User List Functionality: ", function(){
 		it("User list methods should exist", function() {
 			expect(userLists.createUserList).toBeDefined();
 			expect(userLists.saveNewUserList).toBeDefined();
-			// expect(userManagement.returnUsersLists).toBeDefined();
-			// expect(userManagement.tryAddingUserToList).toBeDefined();
-			// expect(userManagement.checkUserExistence).toBeDefined();
-			// expect(userManagement.addUserToList).toBeDefined();
-			// expect(userManagement.removeUserFromList).toBeDefined();
-			// expect(userManagement.returnUserList).toBeDefined();
-			// expect(userManagement.deleteUserList).toBeDefined();
+			// expect(UserList.tryAddingUserToList).toBeDefined();
+			// expect(UserList.addUserToList).toBeDefined();
+			// expect(UserList.removeUserFromList).toBeDefined();
+			// expect(UserList.returnUsersLists).toBeDefined();
+			// expect(UserList.renameUserList).toBeDefined();
+			// expect(UserList.deleteUserList).toBeDefined();
+			// expect(userCommon.checkUserExistence).toBeDefined();
 		});
 	});
 
@@ -67,13 +67,11 @@ describe ("User List Functionality: ", function(){
 			beforeEach(function(done){
 				spyOn(userCommon, "checkUserExistence").andCallThrough();
 				spyOn(userLists, "saveNewUserList").andCallThrough();
-				userLists.createUserList("Dalibor", "List 2").then(function(result){
+				userLists.createUserList("Dalibor", "List 1").then(function(result){
 						if (result) {
 							console.log("An error occured: " + result);
 						}
-						else {
-							done();
-						}
+						done();
 				});
 			});
 			it("should add an user list to an user", function(){
