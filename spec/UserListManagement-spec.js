@@ -28,8 +28,7 @@ describe ("User List Functionality: ", function(){
 		it("User list methods should exist", function() {
 			expect(userLists.createUserList).toBeDefined();
 			expect(userLists.saveNewUserList).toBeDefined();
-			// expect(UserList.tryAddingUserToList).toBeDefined();
-			// expect(UserList.addUserToList).toBeDefined();
+			expect(userLists.addUserToList).toBeDefined();
 			// expect(UserList.removeUserFromList).toBeDefined();
 			// expect(UserList.returnUsersLists).toBeDefined();
 			// expect(UserList.renameUserList).toBeDefined();
@@ -46,13 +45,13 @@ describe ("User List Functionality: ", function(){
 			console.log("New userLists array: " + result);
 			done();
 		}).catch(function(reason){
-			console.log("An error occured: " + reason);
+			console.log("An error occured while saving new user list: " + reason);
 			newUserList = reason;	// a hack; the newUserList object will contain a string in the case of an error
 			done();
 		});
 		});
 
-		it ("should return an _id of a new user list", function(){
+		it ("should return a new user list", function(){
 			expect(newUserList instanceof Object).toBe(true);
 			expect(newUserList.name).toMatch("A New List");
 			user.userLists = [newUserList];	// we memorize this user list inside of user object
@@ -72,13 +71,36 @@ describe ("User List Functionality: ", function(){
 							console.log("An error occured: " + result);
 						}
 						done();
+				}).catch(function(reason){
+					console.log("An error while creating user list: " + reason);
+					done();
 				});
 			});
+
 			it("should add an user list to an user", function(){
 				expect(userCommon.checkUserExistence).toHaveBeenCalled();
 				expect(userLists.saveNewUserList).toHaveBeenCalled();
 				expect(userLists.saveNewUserList.mostRecentCall.args[0] instanceof User).toBe(true);
 				expect(typeof(userLists.saveNewUserList.mostRecentCall.args[1])).toMatch("string");
+			});
+		});
+
+		describe("Adding user to an user list", function(){
+			beforeEach(function(done){
+				spyOn(userCommon, "checkUserExistence").andCallThrough();
+				userLists.addUserToList("Dalibor", "List 1", "AnExistingName").then(function(reason){
+					if (reason) console.log("Error while adding user to an user list: " + reason);
+					else console.log("User added to list.");
+					done();
+				}).catch(function(reason){
+					console.log("Error while adding user to a list: " + reason);
+					done();
+				});
+			});
+
+			it("should add an user to an user list", function(){
+				expect(userCommon.checkUserExistence).toHaveBeenCalled();
+				expect(typeof(userCommon.checkUserExistence.mostRecentCall.args[0])).toMatch("string");
 			});
 		});
 

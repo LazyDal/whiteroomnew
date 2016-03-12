@@ -31,12 +31,14 @@ var userLists = {
 			userCommon.checkUserExistence(userName).then(function(result){
 				if (result === 'already exists.') {
 					var validationResults = validate(listName, createUserListConstraints);
-					if (validationResults !== {}) resolve(validationResults);
+					if (validationResults) { 
+						resolve(validationResults);
+					}
 					User
 						.findOne({ 'userName': userName })
 						.populate('userLists', 'name')
-						.exec(function(err, foundUser){
-							if (err) throw err; // TODO
+						.exec(function(err, foundUser) {
+							if (err) reject(err); // TODO
 
 							that.saveNewUserList(foundUser, listName).then(function(newUserList) {
 									thisUserLists = foundUser.userLists;
@@ -45,13 +47,13 @@ var userLists = {
 										{ userName: userName }, 
 										{ $set: { userLists: thisUserLists } },
 										function(err){
-											if (err) throw err;	// TODO
-											resolve();
+											if (err) reject(err);	// TODO
 											console.log('User List Created.');
+											resolve();
 										}
 									);		
 							}).catch(function(reason){
-								console.log("An error occured: " + reason); // TODO
+								reject(reason); // TODO
 							});
 						});
 				}
@@ -80,21 +82,66 @@ var userLists = {
 					});
 					newUserList.save(function(err){
 						if (err) reject(err);
+						resolve(newUserList);
 					});
 			}
 			else {
 				reject("User list with the same name already exists.");
 			}
-			resolve(newUserList);
 		});
 	},
-	tryAddingUserToList: function(user, userList) {
-		userCommon.checkUserExistence(user.userName);
-		this.addUserToList(user, userList);
-		return null;
+	addUserToList: function(userName, listName, userToAdd) {
+		return new Promise(function(resolve, reject){ 
+			var foundUserList, listToSave, listToSaveSet;
+			User
+			.findOne({'userName' : userName})
+			.populate('userLists')
+			.exec(function(err, foundUser) {
+				if (err) reject(err);	// TODO
+				if (foundUser) {
+					console.log("User lists of user " + foundUser.userName + ": " + JSON.stringify(foundUser.userLists));
+					for (var i = 0; i < foundUser.userLists.length; ++i) {
+						if (foundUser.userLists[i].name === listName) {
+							console.log("List found: " + foundUser.userLists[i].name);
+							foundUserList = foundUser.userLists[i];
+						}
+					}
+					if (foundUserList) {
+						console.log("Entered saving section.");
+						userCommon.checkUserExistence(userToAdd).then(function(result) {
+							if (result === "already exists.") {
+								
+								listToSaveSet = new Set(foundUserList.users);
+								listToSaveSet.add(userToAdd);
+								listToSave = listToSaveSet.map(function(usr){
+									return usr;
+								})
+								UserList.update( // we use model object itself, not an instance - it wouldn't work
+									{ _id: foundUserList._id }, 
+									{ $set: { users: listToSave } },
+									function(err){
+										if (err) reject(err);	// TODO
+										console.log('User Added to List.');
+										resolve();
+									}
+								);
+							} // if result
+							else {
+								resolve("User to add doesn't exist"); // TODO
+							}
+						}).catch(function(reason){
+							resolve(reason);
+						});
+					} // if foundUserList
+					else {
+						resolve("User list doesn't exist"); // TODO
+					}
+				} // if foundUser
+				else {
+					resolve("this user doesn't exist.");	// TODO
+				}
+			});
+		});
 	},
-	addUserToList: function(user, userList) {
-		// TODO
-	}
 }
 module.exports = userLists;
