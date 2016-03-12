@@ -37,39 +37,19 @@ describe ("User List Functionality: ", function(){
 		});
 	});
 
-	describe ("Saving new user list to MongoDB: ", function(){
-		var newUserList = [];
-		beforeEach(function(done){
-			userLists.saveNewUserList(user, 'A New List').then(function(result){
-			newUserList = result;
-			console.log("New userLists array: " + result);
-			done();
-		}).catch(function(reason){
-			console.log("An error occured while saving new user list: " + reason);
-			newUserList = reason;	// a hack; the newUserList object will contain a string in the case of an error
-			done();
-		});
-		});
-
-		it ("should return a new user list", function(){
-			expect(newUserList instanceof Object).toBe(true);
-			expect(newUserList.name).toMatch("A New List");
-			user.userLists = [newUserList];	// we memorize this user list inside of user object
-		});
-
-		it ("should reject new list due to a same name with an existing user list", function(){
-			expect(typeof(newUserList)).toMatch("string"); // we expect a string, since an error should occur
-		});
-	});
-
-	describe("Creating a new user list: ", function(){
+	// User AnExistingName must exist in the database
+	describe("Creating new user lists of user AnExistingName: ", function(){
+			var i = 0;
+			var userListName = ["List 1", "List 1", "List 2"];
 			beforeEach(function(done){
 				spyOn(userCommon, "checkUserExistence").andCallThrough();
 				spyOn(userLists, "saveNewUserList").andCallThrough();
-				userLists.createUserList("Dalibor", "List 1").then(function(result){
+				userLists.createUserList("AnExistingName", userListName[i]).then(function(result){
 						if (result) {
 							console.log("An error occured: " + result);
 						}
+						else console.log('User List ' + userListName[i] + ' Created.');
+						++i;
 						done();
 				}).catch(function(reason){
 					console.log("An error while creating user list: " + reason);
@@ -77,23 +57,77 @@ describe ("User List Functionality: ", function(){
 				});
 			});
 
-			it("should add an user list to an user", function(){
+			it("should add an user list to the user", function(){
 				expect(userCommon.checkUserExistence).toHaveBeenCalled();
 				expect(userLists.saveNewUserList).toHaveBeenCalled();
 				expect(userLists.saveNewUserList.mostRecentCall.args[0] instanceof User).toBe(true);
 				expect(typeof(userLists.saveNewUserList.mostRecentCall.args[1])).toMatch("string");
 			});
+			it("should add an user list to the user", function(){
+				expect(userCommon.checkUserExistence).toHaveBeenCalled();
+				expect(userLists.saveNewUserList).toHaveBeenCalled();
+				expect(userLists.saveNewUserList.mostRecentCall.args[0] instanceof User).toBe(true);
+				expect(typeof(userLists.saveNewUserList.mostRecentCall.args[1])).toMatch("string");
+			});
+			it("should add an user list to the user", function(){
+				expect(userCommon.checkUserExistence).toHaveBeenCalled();
+				expect(userLists.saveNewUserList).toHaveBeenCalled();
+				expect(userLists.saveNewUserList.mostRecentCall.args[0] instanceof User).toBe(true);
+				expect(typeof(userLists.saveNewUserList.mostRecentCall.args[1])).toMatch("string");
+			});
+
 		});
 
-		describe("Adding user to an user list", function(){
+	// User Dalibor must exist in the database
+	describe("Creating new user lists of user Dalibor: ", function(){
+			var i = 0;
+			var userListName = ["List 1", "List 2"];
 			beforeEach(function(done){
 				spyOn(userCommon, "checkUserExistence").andCallThrough();
-				userLists.addUserToList("Dalibor", "List 1", "AnExistingName").then(function(reason){
+				spyOn(userLists, "saveNewUserList").andCallThrough();
+				userLists.createUserList("Dalibor", userListName[i]).then(function(result){
+						if (result) {
+							console.log("An error occured: " + result);
+						}
+						else console.log('User List ' + userListName[i] + ' Created.');
+						++i;
+						done();
+				}).catch(function(reason){
+					console.log("An error while creating user list: " + reason);
+					done();
+				});
+			});
+
+			it("should create an user list", function(){
+				expect(userCommon.checkUserExistence).toHaveBeenCalled();
+				expect(userLists.saveNewUserList).toHaveBeenCalled();
+				expect(userLists.saveNewUserList.mostRecentCall.args[0] instanceof User).toBe(true);
+				expect(typeof(userLists.saveNewUserList.mostRecentCall.args[1])).toMatch("string");
+			});
+			it("should create an user list", function(){
+				expect(userCommon.checkUserExistence).toHaveBeenCalled();
+				expect(userLists.saveNewUserList).toHaveBeenCalled();
+				expect(userLists.saveNewUserList.mostRecentCall.args[0] instanceof User).toBe(true);
+				expect(typeof(userLists.saveNewUserList.mostRecentCall.args[1])).toMatch("string");
+			});
+
+		});
+
+		// AnExistingName and Jelena users must exist in the database
+		describe("Adding user to an user list", function(){
+			var i = 0;
+			var userToAdd = ["AnExistingName", "NonexistingName", "Jelena"]
+
+			beforeEach(function(done){
+				spyOn(userCommon, "checkUserExistence").andCallThrough();
+				userLists.addUserToList("Dalibor", "List 1", userToAdd[i]).then(function(reason){
 					if (reason) console.log("Error while adding user to an user list: " + reason);
 					else console.log("User added to list.");
+					++i;
 					done();
 				}).catch(function(reason){
 					console.log("Error while adding user to a list: " + reason);
+					++i;
 					done();
 				});
 			});
@@ -101,6 +135,50 @@ describe ("User List Functionality: ", function(){
 			it("should add an user to an user list", function(){
 				expect(userCommon.checkUserExistence).toHaveBeenCalled();
 				expect(typeof(userCommon.checkUserExistence.mostRecentCall.args[0])).toMatch("string");
+			});
+			it("should error out because of non-existing user", function(){
+				expect(userCommon.checkUserExistence).toHaveBeenCalled();
+				expect(typeof(userCommon.checkUserExistence.mostRecentCall.args[0])).toMatch("string");
+			});
+			it("should add an user to an user list", function(){
+				expect(userCommon.checkUserExistence).toHaveBeenCalled();
+				expect(typeof(userCommon.checkUserExistence.mostRecentCall.args[0])).toMatch("string");
+			});
+		}); // describe
+
+		describe("Get all user lists of a user: ", function(){
+			var results;
+			beforeEach(function(done){
+				userLists.getUsersLists("Dalibor").then(function(result){
+					console.log("Lists of user Dalibor: " + JSON.stringify(result));
+					results = result;
+					done();
+				}).catch(function(reason){
+					console.log("Error: " + reason);
+					done();
+				});
+			});
+			it("should return an array of user list names", function(){
+				expect(results instanceof Array).toBe(true);
+				expect(results.length).toBeGreaterThan(0);
+			});
+		});
+
+		describe("Get all users from Dalibor's user list 'List 1': ", function(){
+			var results;
+			beforeEach(function(done){
+				userLists.getUsersFromList("Dalibor", "List 1").then(function(result){
+					console.log("Lists of users from Dalibor's list 'List 1': " + JSON.stringify(result));
+					results = result;
+					done();
+				}).catch(function(reason){
+					console.log("Error: " + reason);
+					done();
+				});
+			});
+			it("should return an array of user names", function(){
+				expect(results instanceof Array).toBe(true);
+				expect(results.length).toBeGreaterThan(0);
 			});
 		});
 

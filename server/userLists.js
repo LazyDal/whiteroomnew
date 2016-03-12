@@ -25,6 +25,7 @@ var createUserListConstraints = {
 }
 
 var userLists = {
+	/* All the asynchronous functions that follow resolve with a string value on and only on validation errors, and reject on and only on internal errors */
 	createUserList: function(userName, listName) {
 		var that = this, thisUserLists = [];
 		return new Promise(function(resolve, reject){
@@ -48,7 +49,6 @@ var userLists = {
 										{ $set: { userLists: thisUserLists } },
 										function(err){
 											if (err) reject(err);	// TODO
-											console.log('User List Created.');
 											resolve();
 										}
 									);		
@@ -57,7 +57,7 @@ var userLists = {
 							});
 						});
 				}
-				else resolve("this user doesn't exist");
+				else reject("this user doesn't exist");
 			});
 		});
 	},
@@ -86,7 +86,7 @@ var userLists = {
 					});
 			}
 			else {
-				reject("User list with the same name already exists.");
+				resolve("User list with the same name already exists.");
 			}
 		});
 	},
@@ -99,15 +99,15 @@ var userLists = {
 			.exec(function(err, foundUser) {
 				if (err) reject(err);	// TODO
 				if (foundUser) {
-					console.log("User lists of user " + foundUser.userName + ": " + JSON.stringify(foundUser.userLists));
+					// console.log("User lists of user " + foundUser.userName + ": " + JSON.stringify(foundUser.userLists));
 					for (var i = 0; i < foundUser.userLists.length; ++i) {
 						if (foundUser.userLists[i].name === listName) {
-							console.log("List found: " + foundUser.userLists[i].name);
+							// console.log("List found: " + foundUser.userLists[i].name);
 							foundUserList = foundUser.userLists[i];
 						}
 					}
 					if (foundUserList) {
-						console.log("Entered saving section.");
+						// console.log("Entered saving section.");
 						userCommon.checkUserExistence(userToAdd).then(function(result) {
 							if (result === "already exists.") {
 								
@@ -121,7 +121,7 @@ var userLists = {
 									{ $set: { users: listToSave } },
 									function(err){
 										if (err) reject(err);	// TODO
-										console.log('User Added to List.');
+										// console.log('User Added to List.');
 										resolve();
 									}
 								);
@@ -130,7 +130,7 @@ var userLists = {
 								resolve("User to add doesn't exist"); // TODO
 							}
 						}).catch(function(reason){
-							resolve(reason);
+							reject(reason);	// TODO
 						});
 					} // if foundUserList
 					else {
@@ -143,5 +143,49 @@ var userLists = {
 			});
 		});
 	},
+	getUsersLists: function(userName) {
+		return new Promise(function(resolve, reject){ 
+			var userListNames;
+			User
+			.findOne({'userName' : userName})
+			.populate('userLists', 'name')
+			.exec(function(err, foundUser) {
+				if (err) reject(err);	// TODO
+				if (foundUser) {
+					userListNames = foundUser.userLists.map(function(userList){
+						return userList.name;
+					});
+					resolve(userListNames);
+				}
+				else {
+					resolve("User doesn't exist");
+				}
+			});
+		});
+	},
+	getUsersFromList: function(userName, listName) {
+		return new Promise(function(resolve, reject){ 
+			var foundUserList, usersFromList;
+			User
+			.findOne({'userName' : userName})
+			.populate('userLists')
+			.exec(function(err, foundUser) {
+				if (err) reject(err);	// TODO
+				if (foundUser) {
+					foundUserList = foundUser.userLists.filter(function(userList){
+						return userList.name === listName;
+					});
+					if (foundUserList) {
+						console.log("Found users: " + foundUserList[0]);
+						resolve(foundUserList[0].users);
+					}
+					else resolve("List doesn't exist");
+				}
+				else {
+					resolve("User doesn't exist");
+				}
+			});
+		}); 
+	}
 }
 module.exports = userLists;
