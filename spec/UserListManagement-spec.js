@@ -30,10 +30,9 @@ describe ("User List Functionality: ", function(){
 			expect(userLists.saveNewUserList).toBeDefined();
 			expect(userLists.addUserToList).toBeDefined();
 			// expect(UserList.removeUserFromList).toBeDefined();
-			// expect(UserList.returnUsersLists).toBeDefined();
 			// expect(UserList.renameUserList).toBeDefined();
 			// expect(UserList.deleteUserList).toBeDefined();
-			// expect(userCommon.checkUserExistence).toBeDefined();
+			expect(userCommon.checkUserExistence).toBeDefined();
 		});
 	});
 
@@ -181,27 +180,4 @@ describe ("User List Functionality: ", function(){
 				expect(results.length).toBeGreaterThan(0);
 			});
 		});
-
-		// describe("Creating User Lists:", function(done){
-		// 	beforeEach(function(done) {
-		// 		spyOn(userCommon, "checkUserExistence").andCallThrough();
-		// 		userProfile.createUserList('AnExistingName', 'First List').then(function(results){
-		// 			if (results)
-		// 				console.log("Validation error" + results);
-		// 			done();
-		// 		}).catch(function(result){
-		// 			console.log("An error occured:" + result);
-		// 			done();
-		// 		});
-		// 	});
-		// 	it("should check if the user exists and create user list", function() {
-						
-		// 		expect(userProfile.checkUserExistence).toHaveBeenCalled();
-		// 		expect(typeof(userProfile.checkUserExistence.mostRecentCall.args[0])).toEqual('string');
-
-		// 		expect(userManagement.addUserToList).toHaveBeenCalled();
-		// 		expect(userManagement.addUserToList.mostRecentCall.args[0] instanceof User).toBe(true);
-		// 		expect(userManagement.addUserToList.mostRecentCall.args[1] instanceof UserList).toBe(true);
-		// 	});
-		// }); // describe
 });

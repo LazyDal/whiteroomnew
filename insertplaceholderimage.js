@@ -1,12 +1,6 @@
 var mongoose = require('./server/MongooseTestConnection'); // This will automaticaly open the MongoDB connection
 var fs=require('fs');
 
-// Unit Under Test
-var userManagement = require('./server/userManagement');
-
-/*****************************************************/
-/* Objects which will be used as arguments for tests */
-/*****************************************************/
 /* User Image */
 var UserImage = require('./model/UserSchema').UserImage;
 var userImage = new UserImage({

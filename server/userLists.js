@@ -31,7 +31,7 @@ var userLists = {
 		return new Promise(function(resolve, reject){
 			userCommon.checkUserExistence(userName).then(function(result){
 				if (result === 'already exists.') {
-					var validationResults = validate(listName, createUserListConstraints);
+					var validationResults = validate({'name': listName}, createUserListConstraints);
 					if (validationResults) { 
 						resolve(validationResults);
 					}
@@ -42,6 +42,8 @@ var userLists = {
 							if (err) reject(err); // TODO
 
 							that.saveNewUserList(foundUser, listName).then(function(newUserList) {
+									if (typeof(newUserList)==='string') resolve (newUserList); // This means there was a validation error
+
 									thisUserLists = foundUser.userLists;
 									thisUserLists.push(newUserList);
 									User.findOneAndUpdate( // we use model object itself, not an instance - it wouldn't work
@@ -99,15 +101,12 @@ var userLists = {
 			.exec(function(err, foundUser) {
 				if (err) reject(err);	// TODO
 				if (foundUser) {
-					// console.log("User lists of user " + foundUser.userName + ": " + JSON.stringify(foundUser.userLists));
 					for (var i = 0; i < foundUser.userLists.length; ++i) {
 						if (foundUser.userLists[i].name === listName) {
-							// console.log("List found: " + foundUser.userLists[i].name);
 							foundUserList = foundUser.userLists[i];
 						}
 					}
 					if (foundUserList) {
-						// console.log("Entered saving section.");
 						userCommon.checkUserExistence(userToAdd).then(function(result) {
 							if (result === "already exists.") {
 								
@@ -121,7 +120,6 @@ var userLists = {
 									{ $set: { users: listToSave } },
 									function(err){
 										if (err) reject(err);	// TODO
-										// console.log('User Added to List.');
 										resolve();
 									}
 								);
@@ -176,7 +174,6 @@ var userLists = {
 						return userList.name === listName;
 					});
 					if (foundUserList) {
-						console.log("Found users: " + foundUserList[0]);
 						resolve(foundUserList[0].users);
 					}
 					else resolve("List doesn't exist");
