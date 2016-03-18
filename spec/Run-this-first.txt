@@ -1,1 +1,0 @@
-Rename InitialSuccesfullUserSignUp to InitialSuccesfullUserSignUp-spec.js and run ONLY ONCE BEFORE other tests, because this test sets up MongoDB WhiteroomTest database for further testing

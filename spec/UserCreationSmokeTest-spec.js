@@ -2,23 +2,26 @@
 
 var Promise = require('es6-promise').Promise;
 var mongoose = require('../server/MongooseTestConnection'); // This will automaticaly open the MongoDB connection
-var fs=require('fs');
+
+//
+// For the following tests MongoDB must be installed and running
+// placeholder image must be saved to MongoDB
+// You can insert it by entering the spec directory and typing 'node insertplaceholderimage.js'
+//
+
+// Functionality common to several User-related modules
+var userCommon = require('../server/userCommon.js');
 
 // Unit Under Test
 var userProfile = require('../server/userProfile');
 
-/*****************************************************************/
-/* Objects which will be used as arguments for the tests follow  */
-/* MongoDB must be installed and running	 */
-/*****************************************************************/
-/* User Image - we will insert the default placeholder image in this test */
+/****************************************************************/
+/* Objects which will be used as arguments for the tests follow */
+/****************************************************************/
+
+/* User Image Mongoose model - we will provide null as a value of user image    */
 var UserImage = require('../model/UserSchema').UserImage;
-var userImage = new UserImage({
-	data: fs.readFileSync('../static/images/user-placeholder.jpg'),
-	contentType: 'image/jpeg',
-	name: "userImagePlaceholder",
-	tmpPath: __dirname + '/../static/images/user-placeholder.jpg'
-});
+
 /* Import User List model */
 var UserList = require('../model/UserSchema').UserList;
 // Create user list instance
@@ -40,7 +43,7 @@ var user = new User({
 	sex: 'Female',
 	status: 'In relation',
 	interestedIn: 'Men',
-	image: userImage,
+	image: null,
 	userLists: userList,
 	createdOn: Date.now(),
 	lastAction: Date.now(),
@@ -51,16 +54,6 @@ var user = new User({
 
 
 describe("Succsefull User Sign Up Process:", function () {
-
-	describe("The User Image Object:", function () {
-		it("should exist", function(){
-			expect(userImage).toBeDefined();
-		});
-		it("should contain all the neccesary fields", function() {
-			expect(userImage.data).toBeDefined();
-			expect(userImage.contentType).toBeDefined();
-		});
-	});
 
 	describe("The User Object:", function() {
 		it("should exist", function () {
@@ -102,7 +95,6 @@ describe("Succsefull User Sign Up Process:", function () {
 			expect(userProfile).toBeDefined();
 		});
 		it ("should contain all the neccesary methods" , function(){
-			expect(userProfile.checkUserExistence).toBeDefined();
 			expect(userProfile.newUserValidation).toBeDefined();
 			expect(userProfile.updateUserValidation).toBeDefined();
 			expect(userProfile.newUser).toBeDefined();
@@ -128,35 +120,29 @@ describe("Succsefull User Sign Up Process:", function () {
 			spyOn(userProfile, 'hashPassword');
 			spyOn(userProfile, 'saveUser').andCallThrough();
 			// Now we envoke the function which orchestrates the new user creation process; it returns a promise, since it uses several async functions
-	    // First save the user image
-	    userImage.save(function(err){
-				if (err) throw err;
-		    // Now try to create new user
-		    userProfile.newUser(user).then(	// This is quite a complex process where all validation must happen first
-	 				function (results) {
-					  validationResults = results;
-			      console.log(validationResults);
-			      // Invoke the special Jasmine done callback; no further tests will run before this function is invoked
-			      done();
-	 				}
-	 			).catch(function(reason){
-	 				console.log(reason);
-	 				done();
-	 			});
+	    // Try to create new user
+	    userProfile.newUser(user).then(	// This is quite a complex process where all validation must happen first
+ 				function (results) {
+				  validationResults = results;
+		      console.log("Validation results: " + validationResults);
+		      // Invoke the special Jasmine done callback; no further tests will run before this function is invoked
+		      done();
+ 				}
+ 			).catch(function(reason){
+ 				console.log(reason);
+ 				done();
  			});
 	  });
 		it("should have validated the user object argument, hashed the password and called saveUser method", function() {
 			expect(userProfile.trimFieldSpaces).toHaveBeenCalled();
 			expect(userProfile.newUserValidation).toHaveBeenCalled();
-			expect(validationResults).toEqual(undefined);	// If validation is passed, validation results will be undefined; this is Validate.js convention
+			expect(validationResults).toEqual(undefined);	// If validation is passed, validation results will be undefined
 			expect(userProfile.hashPassword).toHaveBeenCalled();
 			expect(typeof(userProfile.hashPassword.mostRecentCall.args[0])).toMatch("string");
 			expect(userProfile.saveUser).toHaveBeenCalled();
 			expect(userProfile.saveUser.mostRecentCall.args[0] instanceof User).toBe(true);
 			
-			mongoose.connection.close(function () {
-				console.log('Mongoose disconnected');
-		});
+			mongoose.connection.close();
 		}); // it
 	}); // describe
 

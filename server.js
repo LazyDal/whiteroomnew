@@ -18,6 +18,8 @@ var userProfile = require('./server/userProfile');
 // Require Mongoose models that the server will need
 var UserImage = require('./model/UserSchema').UserImage;
 var User = require('./model/UserSchema').User;
+var Room = require('./model/RoomSchema').Room;
+var roomManagement = require('./server/Rooms');
 
 // Instantiate the server
 var server = express();
@@ -54,8 +56,49 @@ server.get('/', function(req,res){
 		res.end('<a href="http://localhost:3000/test/viewprofile.html">View User Profile</a><br /><a href="http://localhost:3000/test/editprofile.html">Edit User Profile</a><br /><a href="http://localhost:3000/getAllLoggedInUsers">Show Logged In Users Test</a><br /><form action="http://localhost:3000/api/logout" method="GET"><button type="submit">Log Out</button></form><a href="http://localhost:3000/test/viewprofile.html"></a>');
 	}
 	else {	// Anonymous user
-		res.end('<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Whiteroom LogIn</title></head><body><h1>Logging In To Whiteroom</h1><form action="http://localhost:3000/api/login" method="POST"><fieldset id="name-group" class="form-group"><input type="text" name="userName" placeholder="User Name"><button type="submit">Log In</button></fieldset></form><a href="http://localhost:3000/test/addprofile.html">Add New Profile Test</a><br /><a href="http://localhost:3000/getAllLoggedInUsers">Show Logged In Users Test</a><br /><a href="http://localhost:3000/test/viewprofile.html">View User Profiles</a></body></html>');
+		res.end('<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Whiteroom LogIn</title></head><body><h1>Logging In To Whiteroom</h1><form action="http://localhost:3000/api/login" method="POST"><fieldset id="name-group" class="form-group"><input type="text" name="userName" placeholder="User Name"><button type="submit">Log In</button></fieldset></form><a href="http://localhost:3000/test/addprofile.html">Add New Profile Test</a><br /><a href="http://localhost:3000/getAllLoggedInUsers">Show Logged In Users Test</a><br /><a href="http://localhost:3000/test/viewprofile.html">View User Profiles</a><br /><a href="/test/Rooms.html">Enter Rooms</a></body></html>');
 	}
+});
+
+server.get('/api/subrooms/:roomId', function(req, res){
+	roomManagement.getSubrooms(req.params.roomId).then(function(subRooms){
+		if (req.session.userName) {
+			req.session.currentRoom = req.params.roomId;
+		}
+		res.send(subRooms);
+	}).catch(function(reason) {
+		console.log(reason);
+		res.end();
+	}) ;
+});
+
+server.get('/api/getRootRoomId', function(req, res){
+	roomManagement.getRootRoomId().then(function(rootRoomId){
+		res.send(rootRoomId);
+	}).catch(function(reason) {
+		console.log(reason);
+		res.end();
+	}) ;
+});
+
+server.post('/api/addRoom', function(req, res){
+	if (!req.session.currentRoom) {
+		res.end("You must be logged in to add rooms.");
+		return;
+	}
+	var newRoom = new Room({
+		name: req.body.roomName,
+		subrooms: []
+	});
+	roomManagement.savePublicRoom(req.session.currentRoom, newRoom).then(function(result){
+		if (result instanceof Error) {
+			console.log("Error: " + result);
+		}
+		res.end();
+	}).catch(function(reason){
+		console.log(reason);
+		res.end();
+	});
 });
 
 // Try to log in user
@@ -66,7 +109,7 @@ server.post('/api/login',function(req,res){
     	redisClient.get("user:" + req.body.userName, function(err, reply) {
         // reply is null when the key is missing
         if(reply) {
-        	// User is already logged in and trying to log in again
+        	// User is already logged in and trying to log in again:
         	// remove the user entry from redis
         	redisClient.del("user:"+req.session.userName);
         	// regenerate the user session
@@ -75,7 +118,7 @@ server.post('/api/login',function(req,res){
 	        	    res.end("<h1>Log out failed due to server error: </h1>" + reason);
 	        	    reject();
 	        	} else {
-        	    resolve();	// now the user has another session, but no entry in redis
+        	    resolve();	// now the user has another session, but no 'user' entry in redis
 	        	}
         							
         	});

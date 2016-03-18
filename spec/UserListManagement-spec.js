@@ -36,7 +36,6 @@ describe ("User List Functionality: ", function(){
 		});
 	});
 
-	// User AnExistingName must exist in the database
 	describe("Creating new user lists of user AnExistingName: ", function(){
 			var i = 0;
 			var userListName = ["List 1", "List 1", "List 2"];
@@ -112,7 +111,7 @@ describe ("User List Functionality: ", function(){
 
 		});
 
-		// AnExistingName and Jelena users must exist in the database
+		// Jelena user must exist in the database
 		describe("Adding user to an user list", function(){
 			var i = 0;
 			var userToAdd = ["AnExistingName", "NonexistingName", "Jelena"]
@@ -178,6 +177,7 @@ describe ("User List Functionality: ", function(){
 			it("should return an array of user names", function(){
 				expect(results instanceof Array).toBe(true);
 				expect(results.length).toBeGreaterThan(0);
+				mongoose.connection.close();
 			});
 		});
 });
