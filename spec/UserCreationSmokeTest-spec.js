@@ -141,9 +141,57 @@ describe("Succsefull User Sign Up Process:", function () {
 			expect(typeof(userProfile.hashPassword.mostRecentCall.args[0])).toMatch("string");
 			expect(userProfile.saveUser).toHaveBeenCalled();
 			expect(userProfile.saveUser.mostRecentCall.args[0] instanceof User).toBe(true);
-			
-			mongoose.connection.close();
+			user = new User({
+				userName: 'Dalibor',
+				email: 'dal@domain.com',
+				password: 'somepassword'
+			})
+			user.sex ='Male';
+			user.status = 'Single';
+			user.interestedIn = 'Women';
+			user.image = null;
+			user.userLists = [];
+			user.createdOn = Date.now();
+			user.lastAction = Date.now();
+			user.totalPosts = 0;
+			user.totalTopicsStarted = 0;
+			user.points = 0;
 		}); // it
+		it("one more user with different values", function(){
+			expect(userProfile.trimFieldSpaces).toHaveBeenCalled();
+			expect(userProfile.newUserValidation).toHaveBeenCalled();
+			expect(validationResults).toEqual(undefined);	// If validation is passed, validation results will be undefined
+			expect(userProfile.hashPassword).toHaveBeenCalled();
+			expect(typeof(userProfile.hashPassword.mostRecentCall.args[0])).toMatch("string");
+			expect(userProfile.saveUser).toHaveBeenCalled();
+			expect(userProfile.saveUser.mostRecentCall.args[0] instanceof User).toBe(true);	
+			user = new User({
+				userName: 'Jelena',
+				email: 'jel@domain.com',
+				password: 'somepassword'
+			})
+			user.sex ='Female';
+			user.status = 'Not specified';
+			user.interestedIn = 'Men';
+			user.image = null;
+			user.userLists = [];
+			user.createdOn = Date.now();
+			user.lastAction = Date.now();
+			user.totalPosts = 0;
+			user.totalTopicsStarted = 0;
+			user.points = 0;
+		});
+		it("one more user with different values", function(){
+			expect(userProfile.trimFieldSpaces).toHaveBeenCalled();
+			expect(userProfile.newUserValidation).toHaveBeenCalled();
+			expect(validationResults).toEqual(undefined);	// If validation is passed, validation results will be undefined
+			expect(userProfile.hashPassword).toHaveBeenCalled();
+			expect(typeof(userProfile.hashPassword.mostRecentCall.args[0])).toMatch("string");
+			expect(userProfile.saveUser).toHaveBeenCalled();
+			expect(userProfile.saveUser.mostRecentCall.args[0] instanceof User).toBe(true);	
+				
+			mongoose.connection.close();
+		});
 	}); // describe
 
 }); // describe

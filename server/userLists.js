@@ -24,10 +24,29 @@ var createUserListConstraints = {
 	}
 }
 
+/**
+ * Provides user list management functions
+ *
+ * @class userLists
+ **/
 var userLists = {
-	/* All the asynchronous functions that follow resolve with a string value on and only on validation errors, and reject on and only on internal errors */
+	/**
+	 * Creates a user list for a user 
+	 *
+	 * @method createUserList
+	 * @param {String} userName name of a user to create list for
+	 * @param {String} listName name of a list to create
+	 * @return {various} Resolves without a value on success, with an 
+	 * object containing errors on validate.js errors, with an Error
+	 * object on other validation errors, and rejects on database 
+	 * access errors
+   **/
 	createUserList: function(userName, listName) {
 		var that = this, thisUserLists = [];
+		if (!userName || !listName) return new Promise(function(resolve, reject){
+				resolve(new ReferenceError("Required parameter is missing, null or an empty string"));
+				return;
+			});
 		return new Promise(function(resolve, reject){
 			userCommon.checkUserExistence(userName).then(function(result){
 				if (result === 'already exists.') {
@@ -42,7 +61,7 @@ var userLists = {
 							if (err) reject(err); // TODO
 
 							that.saveNewUserList(foundUser, listName).then(function(newUserList) {
-									if (typeof(newUserList)==='string') resolve (newUserList); // This means there was a validation error
+									if (newUserList instanceof Error) resolve (newUserList); // This means there was a validation error
 
 									thisUserLists = foundUser.userLists;
 									thisUserLists.push(newUserList);
@@ -59,11 +78,11 @@ var userLists = {
 							});
 						});
 				}
-				else reject("this user doesn't exist");
+				else resolve(new Error("This user doesn't exist"));
 			});
 		});
 	},
-	// Adds new list to a MongoDB collection and returns the new user list
+	// Private method (not technicaly) called by createUserList; adds new list to a MongoDB collection and returns the new user list
 	saveNewUserList: function(user, listName) {
 		return new Promise(function(resolve, reject){
 			var thisUserLists = [], newUserList = [];
@@ -88,13 +107,30 @@ var userLists = {
 					});
 			}
 			else {
-				resolve("User list with the same name already exists.");
+				resolve(new ReferenceError("User list with the same name already exists."));
 			}
 		});
 	},
+	/**
+	 * Adds a user to a user list
+	 *
+	 * @method addUserToList
+	 * @param {String} userName name of a user to update list for
+	 * @param {String} listName name of a list to update
+	 * @param {String} userToAdd name of a user to add to list
+	 * @return {various} Resolves without a value on success, with an 
+	 * Error object on validation errors, and rejects on database 
+	 * access errors
+   **/
 	addUserToList: function(userName, listName, userToAdd) {
+		var foundUserList, listToSave, listToSaveSet;
+
+		if (!userName || !listName || !userToAdd) return new Promise(function(resolve, reject){
+				resolve(new ReferenceError("Required parameter is missing, null or an empty string"));
+				return;
+			});
+
 		return new Promise(function(resolve, reject){ 
-			var foundUserList, listToSave, listToSaveSet;
 			User
 			.findOne({'userName' : userName})
 			.populate('userLists')
@@ -110,6 +146,7 @@ var userLists = {
 						userCommon.checkUserExistence(userToAdd).then(function(result) {
 							if (result === "already exists.") {
 								
+								// We use a set so duplicate user entries inside a user list are impossible
 								listToSaveSet = new Set(foundUserList.users);
 								listToSaveSet.add(userToAdd);
 								listToSave = listToSaveSet.map(function(usr){
@@ -125,23 +162,35 @@ var userLists = {
 								);
 							} // if result
 							else {
-								resolve("User to add doesn't exist"); // TODO
+								resolve(new ReferenceError("User to add doesn't exist"));
 							}
 						}).catch(function(reason){
 							reject(reason);	// TODO
 						});
 					} // if foundUserList
 					else {
-						resolve("User list doesn't exist"); // TODO
+						resolve(new ReferenceError("User list doesn't exist"));
 					}
 				} // if foundUser
 				else {
-					resolve("this user doesn't exist.");	// TODO
+					resolve(new ReferenceError("User doesn't exist"));
 				}
 			});
 		});
 	},
+	/**
+	 * Returns all lists of a User
+	 *
+	 * @method getUsersLists
+	 * @param {String} userName name of a user whose list to return
+	 * @return {Array} Resolves with an array of list names (strings)
+	 * on success, with an Error object on validation errors, and 
+	 * rejects on database access errors
+   **/
 	getUsersLists: function(userName) {
+		if (!userName) return new Promise(function(resolve, reject){
+				resolve(new ReferenceError("Required parameter is missing, null or an empty string"));
+			});
 		return new Promise(function(resolve, reject){ 
 			var userListNames;
 			User
@@ -156,12 +205,24 @@ var userLists = {
 					resolve(userListNames);
 				}
 				else {
-					resolve("User doesn't exist");
+					resolve(new ReferenceError("User doesn't exist"));
 				}
 			});
 		});
 	},
+	/**
+		 * Returns all users from a list 
+		 *
+		 * @method getUsersFromList
+		 * @param {String} userName name of a user to whom a list belongs to
+		 * @param {String} listName name of a list to return names from
+		 * @return {various} Resolves with an Array of strings on 
+		 * success, with an Error object on other validation errors, and * rejects on database access errors
+	   **/
 	getUsersFromList: function(userName, listName) {
+		if (!userName || !listName) return new Promise(function(resolve, reject){
+						resolve(new ReferenceError("Required parameter is missing, null or an empty string"));
+					});
 		return new Promise(function(resolve, reject){ 
 			var foundUserList, usersFromList;
 			User
@@ -176,10 +237,10 @@ var userLists = {
 					if (foundUserList) {
 						resolve(foundUserList[0].users);
 					}
-					else resolve("List doesn't exist");
+					else resolve(new ReferenceError("List doesn't exist"));
 				}
 				else {
-					resolve("User doesn't exist");
+					resolve(new ReferenceError("User doesn't exist"));
 				}
 			});
 		}); 

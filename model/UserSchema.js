@@ -28,7 +28,7 @@ var UserSchema = new mongoose.Schema({
 	phone: String,
 	age: { type:Number, min:6, max:250 },
 	sex: {type: String, enum:['Male', 'Female', 'None', 'Other', 'Not Specified']},
-	status: {type: String, enum:['Single', 'In relation', 'Married', 'Divorced', 'None', 'Other', 'Not Specified']},
+	status: {type: String, enum:['Single', 'In relation', 'Married', 'Divorced', 'None', 'Other', 'Not specified']},
 	interestedIn: {type: String, enum:['Men', 'Women', 'Both', 'None', 'Other', 'Not Specified']},
 	// Next two fields are references to documents from other collections; we don't want these objects to be embedded directly in User model
 	image: {type: mongoose.Schema.Types.ObjectId, ref: 'UserImage'},

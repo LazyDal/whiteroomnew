@@ -5,21 +5,18 @@ var mongoose = require('../server/MongooseTestConnection'); // This will automat
 
 // Unit Under Test
 var userLists = require('../server/userLists');
+
 var userCommon = require('../server/userCommon');
 
 // var UserImage = require('../model/UserSchema').UserImage;
 var UserList = require('../model/UserSchema').UserList;
 
 var User = require('../model/UserSchema.js').User;
-var user = new User({
-	userName: 'AnExistingName',
-	userLists: []
-});
 
 // Unit under test
 var userLists = require('../server/userLists');
 
-describe ("User List Functionality: ", function(){
+describe ("User Lists management Smoke Test: ", function(){
 	
 	describe("The User List object:", function(){
 		it("should exist", function(){
@@ -29,6 +26,8 @@ describe ("User List Functionality: ", function(){
 			expect(userLists.createUserList).toBeDefined();
 			expect(userLists.saveNewUserList).toBeDefined();
 			expect(userLists.addUserToList).toBeDefined();
+			expect(userLists.getUsersFromList).toBeDefined();
+			expect(userLists.getUsersLists).toBeDefined();
 			// expect(UserList.removeUserFromList).toBeDefined();
 			// expect(UserList.renameUserList).toBeDefined();
 			// expect(UserList.deleteUserList).toBeDefined();
@@ -38,19 +37,22 @@ describe ("User List Functionality: ", function(){
 
 	describe("Creating new user lists of user AnExistingName: ", function(){
 			var i = 0;
-			var userListName = ["List 1", "List 1", "List 2"];
+			var userListName = ["List 1", "List 2"];
 			beforeEach(function(done){
 				spyOn(userCommon, "checkUserExistence").andCallThrough();
 				spyOn(userLists, "saveNewUserList").andCallThrough();
 				userLists.createUserList("AnExistingName", userListName[i]).then(function(result){
 						if (result) {
-							console.log("An error occured: " + result);
+							if (result instanceof Error)
+								console.log("An error while creating user list occured: " + result);
+							else
+								console.log("A validation error occured: " + JSON.stringify(result));
 						}
 						else console.log('User List ' + userListName[i] + ' Created.');
 						++i;
 						done();
 				}).catch(function(reason){
-					console.log("An error while creating user list: " + reason);
+					console.log("An internal error while creating user list: " + reason);
 					done();
 				});
 			});
@@ -67,16 +69,10 @@ describe ("User List Functionality: ", function(){
 				expect(userLists.saveNewUserList.mostRecentCall.args[0] instanceof User).toBe(true);
 				expect(typeof(userLists.saveNewUserList.mostRecentCall.args[1])).toMatch("string");
 			});
-			it("should add an user list to the user", function(){
-				expect(userCommon.checkUserExistence).toHaveBeenCalled();
-				expect(userLists.saveNewUserList).toHaveBeenCalled();
-				expect(userLists.saveNewUserList.mostRecentCall.args[0] instanceof User).toBe(true);
-				expect(typeof(userLists.saveNewUserList.mostRecentCall.args[1])).toMatch("string");
-			});
 
 		});
 
-	// User Dalibor must exist in the database
+	// For this test, user Dalibor must exist in the database
 	describe("Creating new user lists of user Dalibor: ", function(){
 			var i = 0;
 			var userListName = ["List 1", "List 2"];
@@ -111,10 +107,10 @@ describe ("User List Functionality: ", function(){
 
 		});
 
-		// Jelena user must exist in the database
+		// For this test, Jelena user must exist in the database
 		describe("Adding user to an user list", function(){
 			var i = 0;
-			var userToAdd = ["AnExistingName", "NonexistingName", "Jelena"]
+			var userToAdd = ["AnExistingName", "Jelena"]
 
 			beforeEach(function(done){
 				spyOn(userCommon, "checkUserExistence").andCallThrough();
@@ -134,10 +130,7 @@ describe ("User List Functionality: ", function(){
 				expect(userCommon.checkUserExistence).toHaveBeenCalled();
 				expect(typeof(userCommon.checkUserExistence.mostRecentCall.args[0])).toMatch("string");
 			});
-			it("should error out because of non-existing user", function(){
-				expect(userCommon.checkUserExistence).toHaveBeenCalled();
-				expect(typeof(userCommon.checkUserExistence.mostRecentCall.args[0])).toMatch("string");
-			});
+			
 			it("should add an user to an user list", function(){
 				expect(userCommon.checkUserExistence).toHaveBeenCalled();
 				expect(typeof(userCommon.checkUserExistence.mostRecentCall.args[0])).toMatch("string");
